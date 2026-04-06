@@ -37,7 +37,7 @@
   "private": true,
   "jest": {
     "preset": "jest-expo",
-    "setupFilesAfterFramework": ["@testing-library/react-native/extend-expect"],
+    "setupFilesAfterEnv": ["@testing-library/react-native/extend-expect"],
     "moduleNameMapper": {
       "^@/(.*)$": "<rootDir>/src/$1"
     }
