@@ -6,7 +6,10 @@ const config: Config = {
     {
       displayName: 'lib',
       testEnvironment: 'node',
-      testMatch: ['<rootDir>/__tests__/lib/**/*.test.[jt]s?(x)'],
+      testMatch: [
+        '<rootDir>/__tests__/lib/**/*.test.[jt]s?(x)',
+        '<rootDir>/__tests__/hooks/**/*.test.[jt]s?(x)',
+      ],
       transform: {
         '^.+\\.tsx?$': [
           'babel-jest',
@@ -31,7 +34,7 @@ const config: Config = {
       displayName: 'react-native',
       preset: 'jest-expo',
       testMatch: [
-        '<rootDir>/__tests__/**/!(lib)/**/*.test.[jt]s?(x)',
+        '<rootDir>/__tests__/**/!(lib|hooks)/**/*.test.[jt]s?(x)',
         '<rootDir>/__tests__/*.test.[jt]s?(x)',
       ],
       transformIgnorePatterns: [

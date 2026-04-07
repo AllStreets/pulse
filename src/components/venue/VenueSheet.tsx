@@ -4,6 +4,10 @@ import BottomSheet, { BottomSheetView } from '@gorhom/bottom-sheet';
 import { useVenue } from '@/hooks/useVenue';
 import { HeatChart } from './HeatChart';
 import { VibeTags } from './VibeTags';
+import { CallItButton } from '@/components/predictions/CallItButton';
+import { CallCounter } from '@/components/predictions/CallCounter';
+import { useUserStore } from '@/stores/userStore';
+import { usePredictions } from '@/hooks/usePredictions';
 import type { Venue } from '@/types';
 
 interface Props {
@@ -14,6 +18,8 @@ interface Props {
 export function VenueSheet({ venue, onClose }: Props) {
   const sheetRef = useRef<BottomSheet>(null);
   const { tonightTimeline, historyForNow, predictionCount, vibeTags } = useVenue(venue?.id ?? null);
+  const profile = useUserStore((s) => s.profile);
+  const { callsRemaining } = usePredictions(profile?.id ?? null);
 
   useEffect(() => {
     if (venue) sheetRef.current?.expand();
@@ -59,6 +65,10 @@ export function VenueSheet({ venue, onClose }: Props) {
             </View>
           )}
         </View>
+        <View style={styles.callRow}>
+          <CallItButton targetId={venue.id} currentHeat={venue.current_heat_score} />
+          <CallCounter callsRemaining={callsRemaining} />
+        </View>
         <HeatChart points={tonightTimeline} label="Heat tonight" />
         <VibeTags tags={vibeTags} />
       </BottomSheetView>
@@ -77,4 +87,5 @@ const styles = StyleSheet.create({
   stat: { alignItems: 'center' },
   statValue: { color: '#FF6B35', fontSize: 28, fontWeight: '900' },
   statLabel: { color: '#666', fontSize: 12 },
+  callRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
 });
