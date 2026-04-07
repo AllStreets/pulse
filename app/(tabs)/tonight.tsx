@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet, ActivityIndicator, RefreshControl } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { useTonightFeed } from '@/hooks/useTonightFeed';
 import { usePredictions } from '@/hooks/usePredictions';
 import { useUserStore } from '@/stores/userStore';
@@ -13,12 +14,12 @@ function heatColor(rank: number, total: number): string {
   return HEAT_COLORS[idx];
 }
 
-function outcomeLabel(outcome: string): { text: string; color: string } {
+function outcomeIcon(outcome: string): { name: React.ComponentProps<typeof Ionicons>['name']; color: string; label: string } {
   switch (outcome) {
-    case 'correct':   return { text: '✓ Correct', color: '#4CAF50' };
-    case 'incorrect': return { text: '✗ Missed', color: '#f44' };
-    case 'voided':    return { text: '— Voided', color: '#555' };
-    default:          return { text: '⏳ Pending', color: '#888' };
+    case 'correct':   return { name: 'checkmark-circle', color: '#4CAF50', label: 'Correct' };
+    case 'incorrect': return { name: 'close-circle', color: '#f44336', label: 'Missed' };
+    case 'voided':    return { name: 'remove-circle-outline', color: '#555', label: 'Voided' };
+    default:          return { name: 'time-outline', color: '#888', label: 'Pending' };
   }
 }
 
@@ -62,7 +63,10 @@ export default function TonightScreen() {
         </View>
 
         {/* Hot Right Now */}
-        <Text style={styles.sectionTitle}>🔥 Hot Right Now</Text>
+        <View style={styles.sectionHeader}>
+          <Ionicons name="flame" size={18} color="#FF6B00" />
+          <Text style={styles.sectionTitle}>Hot Right Now</Text>
+        </View>
 
         {loading ? (
           <ActivityIndicator color="#FF6B00" style={{ marginTop: 24 }} />
@@ -89,7 +93,7 @@ export default function TonightScreen() {
                       {item.venue.category}{item.venue.music_genre ? ` · ${item.venue.music_genre}` : ''}{item.venue.age_policy ? ` · ${item.venue.age_policy}` : ''}
                     </Text>
                     <View style={styles.pingRow}>
-                      <View style={[styles.pingDot, { backgroundColor: color }]} />
+                      <Ionicons name="radio-button-on" size={10} color={color} />
                       <Text style={[styles.pingCount, { color }]}>{item.pingCount} live signal{item.pingCount !== 1 ? 's' : ''}</Text>
                     </View>
                   </View>
@@ -98,7 +102,8 @@ export default function TonightScreen() {
                 <View style={styles.cardRight}>
                   {called ? (
                     <View style={styles.calledBadge}>
-                      <Text style={styles.calledText}>Called ✓</Text>
+                      <Ionicons name="checkmark-circle" size={14} color="#4CAF50" />
+                      <Text style={styles.calledText}>Called</Text>
                     </View>
                   ) : (
                     <TouchableOpacity
@@ -118,9 +123,12 @@ export default function TonightScreen() {
         {/* Your Calls Tonight */}
         {myPredictions.length > 0 && (
           <>
-            <Text style={[styles.sectionTitle, { marginTop: 32 }]}>Your Calls Tonight</Text>
+            <View style={[styles.sectionHeader, { marginTop: 32 }]}>
+              <Ionicons name="radio-button-on" size={18} color="#3B82F6" />
+              <Text style={styles.sectionTitle}>Your Calls Tonight</Text>
+            </View>
             {myPredictions.map((p) => {
-              const { text, color } = outcomeLabel(p.outcome);
+              const { name, color, label } = outcomeIcon(p.outcome);
               return (
                 <View key={p.id} style={styles.predictionRow}>
                   <View style={styles.predInfo}>
@@ -129,7 +137,10 @@ export default function TonightScreen() {
                       <Text style={styles.predPoints}>+{p.points_awarded} pts</Text>
                     )}
                   </View>
-                  <Text style={[styles.predOutcome, { color }]}>{text}</Text>
+                  <View style={styles.predOutcomeRow}>
+                    <Ionicons name={name} size={15} color={color} />
+                    <Text style={[styles.predOutcome, { color }]}>{label}</Text>
+                  </View>
                 </View>
               );
             })}
@@ -159,7 +170,8 @@ const styles = StyleSheet.create({
   callsNumber: { color: '#3B82F6', fontSize: 22, fontWeight: '900' },
   callsLabel: { color: '#555', fontSize: 10, marginTop: 1 },
 
-  sectionTitle: { color: '#fff', fontSize: 18, fontWeight: '700', marginBottom: 14, letterSpacing: -0.2 },
+  sectionHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 14 },
+  sectionTitle: { color: '#fff', fontSize: 18, fontWeight: '700', letterSpacing: -0.2 },
   empty: { color: '#444', fontSize: 14, fontStyle: 'italic', marginTop: 8 },
 
   venueCard: {
@@ -179,20 +191,20 @@ const styles = StyleSheet.create({
   cardInfo: { flex: 1, gap: 3 },
   venueName: { color: '#fff', fontSize: 16, fontWeight: '700' },
   venueMeta: { color: '#555', fontSize: 12 },
-  pingRow: { flexDirection: 'row', alignItems: 'center', gap: 5, marginTop: 2 },
-  pingDot: { width: 6, height: 6, borderRadius: 3 },
+  pingRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 2 },
   pingCount: { fontSize: 12, fontWeight: '600' },
 
   cardRight: { marginLeft: 12 },
   callBtn: { backgroundColor: '#3B82F6', paddingVertical: 8, paddingHorizontal: 14, borderRadius: 10 },
   callBtnDisabled: { backgroundColor: '#1a1a1a' },
   callBtnText: { color: '#fff', fontWeight: '700', fontSize: 13 },
-  calledBadge: { paddingVertical: 8, paddingHorizontal: 12 },
+  calledBadge: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingVertical: 8, paddingHorizontal: 4 },
   calledText: { color: '#4CAF50', fontWeight: '700', fontSize: 13 },
 
   predictionRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: '#151515' },
   predInfo: { flex: 1 },
   predVenue: { color: '#ddd', fontSize: 15, fontWeight: '600' },
   predPoints: { color: '#4CAF50', fontSize: 12, marginTop: 2 },
+  predOutcomeRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   predOutcome: { fontSize: 13, fontWeight: '600' },
 });
