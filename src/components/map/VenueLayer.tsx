@@ -16,8 +16,12 @@ export function VenueLayer({ venues, onPress }: Props) {
           id={v.id}
           coordinate={[v.coordinates.lng, v.coordinates.lat]}
           onSelected={() => onPress(v)}
+          anchor={{ x: 0.5, y: 0.5 }}
         >
-          <View style={styles.dot} />
+          {/* 44pt outer hit zone, visible 16pt dot in center */}
+          <View style={styles.hitArea}>
+            <View style={styles.dot} />
+          </View>
         </MapboxGL.PointAnnotation>
       ))}
     </>
@@ -25,12 +29,22 @@ export function VenueLayer({ venues, onPress }: Props) {
 }
 
 const styles = StyleSheet.create({
+  hitArea: {
+    width: 44,
+    height: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   dot: {
-    width: 14,
-    height: 14,
-    borderRadius: 7,
+    width: 16,
+    height: 16,
+    borderRadius: 8,
     backgroundColor: '#3B82F6',
-    borderWidth: 2,
+    borderWidth: 2.5,
     borderColor: '#fff',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.4,
+    shadowRadius: 2,
   },
 });
