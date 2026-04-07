@@ -37,11 +37,11 @@ export function HeatmapLayer({ points }: Props) {
             9, 30,
             13, 60,
           ],
-          // Fade heatmap out as user zooms in so venue dots become visible
+          // Reduce opacity when zoomed in so venue dots are visible
           heatmapOpacity: [
             'interpolate', ['linear'], ['zoom'],
             10, 0.85,
-            13, 0,
+            13, 0.35,
           ],
         }}
       />
