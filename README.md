@@ -9,7 +9,7 @@ A live social nightlife intelligence app for Chicago. See where people are going
 **Features working in the current build:**
 - Email auth with Supabase (sign up → onboarding → heatmap)
 - Live Mapbox heatmap that updates in real time as location pings arrive
-- 30 seeded Chicago venues across 6 neighborhoods (Wicker Park, Logan Square, River North, etc.)
+- 56 real Chicago venues across 8 neighborhoods (Wicker Park, Logan Square, River North, Wrigleyville, Lincoln Park, Boystown, Pilsen, South Loop)
 - Tap any venue → bottom sheet with heat chart, vibe tags, and prediction button
 - "Call It" prediction system — 10 calls per night, boldness multiplier scoring
 - Profile screen showing Heat Score, streak, and tonight's accuracy
