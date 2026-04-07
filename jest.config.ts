@@ -20,6 +20,10 @@ const config: Config = {
       },
       moduleNameMapper: {
         '^@/(.*)$': '<rootDir>/src/$1',
+        '^expo-location$': '<rootDir>/__mocks__/expo-location.js',
+        '^expo-task-manager$': '<rootDir>/__mocks__/expo-task-manager.js',
+        '^\\.\\./supabase$': '<rootDir>/__mocks__/supabase.js',
+        '^\\./supabase$': '<rootDir>/__mocks__/supabase.js',
       },
     },
     // React Native / Expo component tests — use jest-expo preset
