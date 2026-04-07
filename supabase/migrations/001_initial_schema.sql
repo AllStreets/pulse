@@ -41,7 +41,6 @@ create index venues_coordinates_idx on venues using gist(coordinates);
 
 -- Heat history (2-hour buckets by day of week)
 create table venue_heat_history (
-  id uuid primary key default gen_random_uuid(),
   venue_id uuid references venues(id) not null,
   day_of_week smallint not null check (day_of_week between 0 and 6),
   hour_bucket smallint not null check (hour_bucket between 0 and 11),
@@ -49,7 +48,7 @@ create table venue_heat_history (
   p75_heat numeric not null default 0,
   sample_count integer not null default 0,
   updated_at timestamptz default now(),
-  unique(venue_id, day_of_week, hour_bucket)
+  primary key (venue_id, day_of_week, hour_bucket)
 );
 
 -- Location pings (no user_id — anonymized)
@@ -98,6 +97,9 @@ create table predictions (
 );
 
 create index predictions_pending_idx on predictions(outcome) where outcome = 'pending';
+create index predictions_user_idx on predictions(user_id);
+create index neighborhoods_city_idx on neighborhoods(city_id);
+create index follows_following_idx on follows(following_id);
 
 -- Local knowledge
 create table local_knowledge (
@@ -129,25 +131,38 @@ create policy "neighborhoods_select" on neighborhoods for select using (true);
 create policy "venues_select" on venues for select using (true);
 create policy "venue_heat_history_select" on venue_heat_history for select using (true);
 create policy "profiles_select" on profiles for select using (true);
-create policy "predictions_select" on predictions for select using (true);
+create policy "predictions_select" on predictions for select using (auth.uid() is not null);
 create policy "follows_select" on follows for select using (true);
 
 -- Auth-gated writes
 create policy "profiles_insert" on profiles for insert with check (auth.uid() = id);
-create policy "profiles_update" on profiles for update using (auth.uid() = id);
-create policy "predictions_insert" on predictions for insert with check (auth.uid() = user_id);
+create policy "profiles_update" on profiles for update
+  using (auth.uid() = id)
+  with check (auth.uid() = id);
+-- Note: heat_score, local_rep, credibility_badge, streak should only be updated
+-- by edge functions using the service role key, not by clients.
+-- Column-level security or moving these fields to a server-only table is recommended
+-- before launch.
+create policy "predictions_insert" on predictions for insert with check (auth.uid() is not null and auth.uid() = user_id);
 create policy "follows_insert" on follows for insert with check (auth.uid() = follower_id);
 create policy "follows_delete" on follows for delete using (auth.uid() = follower_id);
-create policy "pings_insert" on location_pings for insert with check (true);
+create policy "pings_insert" on location_pings for insert with check (auth.uid() is not null);
 create policy "local_knowledge_select" on local_knowledge for select using (status = 'published' or auth.uid() = author_id);
-create policy "local_knowledge_insert" on local_knowledge for insert with check (auth.uid() = author_id);
+create policy "local_knowledge_insert" on local_knowledge for insert with check (auth.uid() is not null and auth.uid() = author_id);
 
 -- Auto-create profile on signup
 create or replace function public.handle_new_user()
-returns trigger language plpgsql security definer as $$
+returns trigger language plpgsql security definer
+set search_path = public, pg_temp as $$
 begin
   insert into public.profiles (id, username)
-  values (new.id, new.raw_user_meta_data->>'username');
+  values (
+    new.id,
+    coalesce(
+      nullif(trim(new.raw_user_meta_data->>'username'), ''),
+      split_part(new.email, '@', 1)
+    )
+  );
   return new;
 end;
 $$;
