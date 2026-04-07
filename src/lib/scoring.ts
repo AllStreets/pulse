@@ -22,7 +22,7 @@ export interface ScoringResult {
   pointsAwarded: number;
 }
 
-const BASE_POINTS = 100;
+export const BASE_POINTS = 100;
 
 export function scorePrediction(input: ScoringInput): ScoringResult {
   const { heatAtCallTime, finalHeatScore, venueHistoricalAvg, venueP75Heat } = input;

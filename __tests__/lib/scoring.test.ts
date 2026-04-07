@@ -66,4 +66,14 @@ describe('scorePrediction', () => {
     expect(result.boldnessScore).toBe(0);
     expect(result.pointsAwarded).toBe(0);
   });
+
+  it('marks incorrect when final heat exactly equals historical average', () => {
+    const result = scorePrediction({
+      ...base,
+      heatAtCallTime: 30,
+      finalHeatScore: 50, // exactly equals venueHistoricalAvg
+    });
+    expect(result.outcome).toBe('incorrect');
+    expect(result.pointsAwarded).toBe(0);
+  });
 });
