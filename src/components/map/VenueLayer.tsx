@@ -1,3 +1,4 @@
+import { View, StyleSheet } from 'react-native';
 import MapboxGL from '@rnmapbox/maps';
 import type { Venue } from '@/types';
 
@@ -7,51 +8,29 @@ interface Props {
 }
 
 export function VenueLayer({ venues, onPress }: Props) {
-  const geojson: GeoJSON.FeatureCollection = {
-    type: 'FeatureCollection',
-    features: venues.map((v) => ({
-      type: 'Feature',
-      id: v.id,
-      geometry: { type: 'Point', coordinates: [v.coordinates.lng, v.coordinates.lat] },
-      properties: { id: v.id },
-    })),
-  };
-
-  function handlePress(e: any) {
-    const feature = e?.features?.[0];
-    if (!feature) return;
-    const venueId = feature.properties?.id;
-    const venue = venues.find((v) => v.id === venueId);
-    if (venue) onPress(venue);
-  }
-
   return (
-    <MapboxGL.ShapeSource
-      id="venues-source"
-      shape={geojson}
-      onPress={handlePress}
-      hitbox={{ width: 44, height: 44 }}
-    >
-      {/* Invisible wide tap target — ensures single tap registers */}
-      <MapboxGL.CircleLayer
-        id="venues-tap-target"
-        style={{
-          circleRadius: 18,
-          circleColor: 'rgba(0,0,0,0)',
-          circleOpacity: 0,
-        }}
-        belowLayerID="venues-layer"
-      />
-      <MapboxGL.CircleLayer
-        id="venues-layer"
-        style={{
-          circleRadius: 7,
-          circleColor: '#3B82F6',
-          circleStrokeWidth: 2,
-          circleStrokeColor: '#ffffff',
-          circleOpacity: 0.95,
-        }}
-      />
-    </MapboxGL.ShapeSource>
+    <>
+      {venues.map((v) => (
+        <MapboxGL.PointAnnotation
+          key={v.id}
+          id={v.id}
+          coordinate={[v.coordinates.lng, v.coordinates.lat]}
+          onSelected={() => onPress(v)}
+        >
+          <View style={styles.dot} />
+        </MapboxGL.PointAnnotation>
+      ))}
+    </>
   );
 }
+
+const styles = StyleSheet.create({
+  dot: {
+    width: 14,
+    height: 14,
+    borderRadius: 7,
+    backgroundColor: '#3B82F6',
+    borderWidth: 2,
+    borderColor: '#fff',
+  },
+});

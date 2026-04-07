@@ -1,4 +1,5 @@
-import { TouchableOpacity, Text, StyleSheet, Alert } from 'react-native';
+import { TouchableOpacity, Text, StyleSheet, Alert, View } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { usePredictions } from '@/hooks/usePredictions';
 import { useUserStore } from '@/stores/userStore';
 
@@ -22,7 +23,10 @@ export function CallItButton({ targetId, currentHeat }: Props) {
   if (alreadyCalled) {
     return (
       <TouchableOpacity style={[styles.button, styles.called]} disabled>
-        <Text style={styles.calledText}>Called ✓</Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+          <Ionicons name="checkmark-circle" size={16} color="#4CAF50" />
+          <Text style={styles.calledText}>Called</Text>
+        </View>
       </TouchableOpacity>
     );
   }
