@@ -85,7 +85,7 @@ const styles = StyleSheet.create({
   metaText: { color: '#888', fontSize: 13 },
   stats: { flexDirection: 'row', gap: 24 },
   stat: { alignItems: 'center' },
-  statValue: { color: '#FF6B35', fontSize: 28, fontWeight: '900' },
+  statValue: { color: '#3B82F6', fontSize: 28, fontWeight: '900' },
   statLabel: { color: '#666', fontSize: 12 },
   callRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
 });

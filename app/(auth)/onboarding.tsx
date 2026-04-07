@@ -40,7 +40,7 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#0a0a0a', justifyContent: 'center', padding: 24 },
   title: { color: '#fff', fontSize: 32, fontWeight: '800', marginBottom: 16 },
   body: { color: '#888', fontSize: 16, lineHeight: 24, marginBottom: 40 },
-  button: { backgroundColor: '#FF6B35', padding: 16, borderRadius: 12, alignItems: 'center', marginBottom: 12 },
+  button: { backgroundColor: '#3B82F6', padding: 16, borderRadius: 12, alignItems: 'center', marginBottom: 12 },
   buttonText: { color: '#fff', fontSize: 16, fontWeight: '700' },
   skip: { color: '#555', textAlign: 'center', fontSize: 14 },
 });

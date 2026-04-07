@@ -15,6 +15,6 @@ export function CallCounter({ callsRemaining }: Props) {
 
 const styles = StyleSheet.create({
   container: { alignItems: 'center' },
-  count: { color: '#FF6B35', fontSize: 22, fontWeight: '900' },
+  count: { color: '#3B82F6', fontSize: 22, fontWeight: '900' },
   label: { color: '#666', fontSize: 11 },
 });

@@ -79,10 +79,10 @@ export default function LoginScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#0a0a0a', justifyContent: 'center', padding: 24 },
-  title: { color: '#FF6B35', fontSize: 48, fontWeight: '900', marginBottom: 8 },
+  title: { color: '#3B82F6', fontSize: 48, fontWeight: '900', marginBottom: 8 },
   subtitle: { color: '#888', fontSize: 18, marginBottom: 40 },
   input: { backgroundColor: '#1a1a1a', color: '#fff', padding: 16, borderRadius: 12, marginBottom: 12, fontSize: 16 },
-  button: { backgroundColor: '#FF6B35', padding: 16, borderRadius: 12, alignItems: 'center', marginTop: 8 },
+  button: { backgroundColor: '#3B82F6', padding: 16, borderRadius: 12, alignItems: 'center', marginTop: 8 },
   buttonText: { color: '#fff', fontSize: 16, fontWeight: '700' },
   toggle: { color: '#666', textAlign: 'center', marginTop: 20, fontSize: 14 },
 });

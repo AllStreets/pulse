@@ -21,5 +21,5 @@ export function VenueMarker({ venue, onPress }: Props) {
 
 const styles = StyleSheet.create({
   marker: { padding: 4 },
-  dot: { color: '#FF6B35', fontSize: 12 },
+  dot: { color: '#3B82F6', fontSize: 12 },
 });

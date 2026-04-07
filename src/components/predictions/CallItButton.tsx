@@ -39,7 +39,7 @@ export function CallItButton({ targetId, currentHeat }: Props) {
 }
 
 const styles = StyleSheet.create({
-  button: { backgroundColor: '#FF6B35', paddingVertical: 12, paddingHorizontal: 24, borderRadius: 12, alignItems: 'center' },
+  button: { backgroundColor: '#3B82F6', paddingVertical: 12, paddingHorizontal: 24, borderRadius: 12, alignItems: 'center' },
   disabled: { backgroundColor: '#2a2a2a' },
   called: { backgroundColor: '#1a3a1a' },
   text: { color: '#fff', fontWeight: '700', fontSize: 15 },

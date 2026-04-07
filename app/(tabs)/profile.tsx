@@ -6,7 +6,7 @@ import { usePredictions } from '@/hooks/usePredictions';
 const BADGE_COLORS: Record<string, string> = {
   casual: '#555',
   regular: '#4A90D9',
-  local: '#FF6B35',
+  local: '#3B82F6',
   legend: '#FFD700',
 };
 
@@ -69,7 +69,7 @@ const styles = StyleSheet.create({
   badgeText: { color: '#fff', fontSize: 12, fontWeight: '600', textTransform: 'uppercase' },
   stats: { flexDirection: 'row', justifyContent: 'space-around', backgroundColor: '#111', borderRadius: 16, padding: 20, marginBottom: 24 },
   stat: { alignItems: 'center' },
-  statValue: { color: '#FF6B35', fontSize: 28, fontWeight: '900' },
+  statValue: { color: '#3B82F6', fontSize: 28, fontWeight: '900' },
   statLabel: { color: '#666', fontSize: 12, marginTop: 2 },
   section: { marginBottom: 24 },
   sectionTitle: { color: '#888', fontSize: 12, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8 },

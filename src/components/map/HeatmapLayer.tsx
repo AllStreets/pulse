@@ -26,9 +26,9 @@ export function HeatmapLayer({ points }: Props) {
           heatmapColor: [
             'interpolate', ['linear'], ['heatmap-density'],
             0, 'rgba(0,0,0,0)',
-            0.2, 'rgba(255,107,53,0.3)',
-            0.5, 'rgba(255,107,53,0.7)',
-            1, 'rgba(255,107,53,1)',
+            0.2, 'rgba(59,130,246,0.3)',
+            0.5, 'rgba(59,130,246,0.7)',
+            1, 'rgba(59,130,246,1)',
           ],
           heatmapRadius: 40,
           heatmapOpacity: 0.8,

@@ -17,7 +17,16 @@ export default function MapScreen() {
 
   return (
     <View style={styles.container}>
-      <MapboxGL.MapView style={styles.map} styleURL="mapbox://styles/mapbox/dark-v11">
+      <MapboxGL.MapView
+        style={styles.map}
+        styleURL="mapbox://styles/mapbox/dark-v11"
+        zoomEnabled
+        scrollEnabled
+        pitchEnabled
+        rotateEnabled
+        compassEnabled={false}
+        scaleBarEnabled={false}
+      >
         <MapboxGL.Camera
           zoomLevel={12}
           centerCoordinate={CHICAGO_CENTER}

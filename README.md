@@ -1,90 +1,161 @@
 # Pulse
 
-A social city intelligence app for Chicago. See where people are going out in real time, predict what will be hot tonight, and discover local knowledge about neighborhoods and venues.
+A live social nightlife intelligence app for Chicago. See where people are going out in real time, predict what venue will surge tonight, and earn credibility for reading the scene early.
 
-## What It Does
+## Demo
 
-- **Live Heatmap** — real-time map of where people are in Chicago, powered by anonymized location pings aggregated by venue and neighborhood
-- **Call It** — predict which venues and neighborhoods will surge tonight. 10 calls per night. Early calls score 2x points; obvious calls score 0.5x
-- **Heat Score** — rolling accuracy rating that builds your reputation as a local
-- **Venue Cards** — current heat vs historical average, tonight's heat timeline, vibe tags, and practical info
-- **Local Knowledge** — neighborhood histories, scene descriptions, and insider tips from verified locals
+> Built as a portfolio project demonstrating a full-stack React Native app with real-time geospatial data, predictive mechanics, and nightly ML-style scoring.
+
+**Features working in the current build:**
+- Email auth with Supabase (sign up → onboarding → heatmap)
+- Live Mapbox heatmap that updates in real time as location pings arrive
+- 30 seeded Chicago venues across 6 neighborhoods (Wicker Park, Logan Square, River North, etc.)
+- Tap any venue → bottom sheet with heat chart, vibe tags, and prediction button
+- "Call It" prediction system — 10 calls per night, boldness multiplier scoring
+- Profile screen showing Heat Score, streak, and tonight's accuracy
+- Background location tracking (anonymized — no user IDs stored in pings)
+- Nightly edge function scores all pending predictions automatically
+
+---
 
 ## Tech Stack
 
-- **Mobile** — React Native + Expo SDK 52, Expo Router v4
-- **Maps** — Mapbox (`@rnmapbox/maps`) with custom heatmap layers
-- **Backend** — Supabase (PostgreSQL + PostGIS, real-time subscriptions, edge functions, auth)
-- **State** — Zustand
-- **Location** — expo-location with background task support
+| Layer | Technology |
+|-------|-----------|
+| Mobile | React Native 0.81 + Expo SDK 54 |
+| Navigation | Expo Router v6 (file-based) |
+| Maps | Mapbox GL (@rnmapbox/maps) |
+| Backend | Supabase (Postgres + PostGIS + Realtime) |
+| Auth | Supabase Auth (email/password) |
+| State | Zustand |
+| Gestures | React Native Gesture Handler + Bottom Sheet |
+| Edge Functions | Supabase Deno functions |
+| Build | EAS Build (iOS dev client) |
 
-## Project Structure
+---
+
+## Architecture
 
 ```
-pulse/
-├── app/                    # Expo Router file-based routing
-│   ├── (auth)/             # Login, signup, onboarding
-│   └── (tabs)/             # Map, Profile tabs
-├── src/
-│   ├── components/         # Map, venue, prediction components
-│   ├── hooks/              # useAuth, useHeatmap, useVenue, usePredictions
-│   ├── lib/                # Supabase client, location tracking, scoring logic
-│   ├── stores/             # Zustand user store
-│   └── types/              # Shared TypeScript types
-├── supabase/
-│   ├── migrations/         # PostgreSQL schema, seed data, RPCs
-│   └── functions/          # score-predictions edge function (2am cron)
-└── __tests__/              # Jest test suites
+app/
+  (auth)/login.tsx          # Email login + signup
+  (auth)/onboarding.tsx     # Location permission request
+  (tabs)/index.tsx          # Live Mapbox heatmap
+  (tabs)/profile.tsx        # User stats + sign out
+src/
+  hooks/
+    useAuth.ts              # Supabase session lifecycle
+    useHeatmap.ts           # Real-time venue + ping aggregation
+    useVenue.ts             # Per-venue data (history, predictions, tags)
+    usePredictions.ts       # Call It logic (10/night, dedup, scoring)
+  components/
+    map/HeatmapLayer.tsx    # Mapbox heatmap from ping GeoJSON
+    map/VenueMarker.tsx     # Tappable venue dots
+    venue/VenueSheet.tsx    # Bottom sheet with full venue card
+    venue/HeatChart.tsx     # Tonight's 2-hour bucket bar chart
+    venue/VibeTags.tsx      # Community vibe tag pills
+    predictions/CallItButton.tsx
+    predictions/CallCounter.tsx
+  lib/
+    location.ts             # haversine snap-to-venue + anonymized pings
+    locationTask.ts         # Expo background task handler
+    scoring.ts              # Boldness multiplier + prediction outcome logic
+    supabase.ts             # Client with AsyncStorage session persistence
+  stores/userStore.ts       # Zustand: profile + nightly call count
+supabase/
+  migrations/               # 8 migrations: schema, Chicago seed, history seed
+  functions/score-predictions/  # Nightly edge function
 ```
 
-## Getting Started
+---
+
+## Database Schema
+
+### Core Tables
+
+**venues** — 30 Chicago bars/clubs with PostGIS coordinates, music genre, age policy, cover price, current heat score
+
+**location_pings** — Anonymized pings (venue_id + neighborhood_id, NO user_id). Aggregated into heatmap weights over a rolling 30-minute window.
+
+**venue_heat_history** — Historical averages by day_of_week × hour_bucket (2h buckets). Used by the scoring function to determine if tonight's heat beats the historical average.
+
+**predictions** — User predictions: target venue, time_window (tonight/weekend/event), heat_at_call_time, boldness_score (0.5–2.0×), outcome (pending→correct/incorrect/voided).
+
+**profiles** — heat_score, local_rep, credibility_badge (casual→regular→local→legend), day streak.
+
+### Key Design Decisions
+
+- **Privacy by design**: `location_pings` has no `user_id` column. Pings are permanently anonymous.
+- **Boldness multiplier**: Calling a venue before it hits p75 historical heat → 2.0× points. Calling after the crowd is already there → 0.5×. Rewards local knowledge.
+- **Correctness definition**: A prediction is correct if `finalHeatScore > historicalAvgHeat` for that venue × day × hour combination.
+- **Real-time**: Heatmap auto-updates via Supabase Realtime channel subscriptions on location_pings INSERT.
+
+---
+
+## Running Locally
 
 ### Prerequisites
+- Node 20 (`.nvmrc` pins this — use `nvm use`)
+- Xcode 15+ with iOS Simulator
+- Mapbox account (for native SDK download token)
 
-- Node.js 18+
-- Expo CLI (`npm install -g expo-cli`)
-- Supabase account
-- Mapbox account
-
-### Environment Variables
-
-Create `.env.local`:
-```
-EXPO_PUBLIC_SUPABASE_URL=your_supabase_project_url
-EXPO_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
-EXPO_PUBLIC_MAPBOX_TOKEN=your_mapbox_public_token
-```
-
-For the Mapbox native SDK, add your secret token to `app.json` in the `@rnmapbox/maps` plugin config.
-
-### Database Setup
+### Setup
 
 ```bash
-npx supabase link --project-ref your_project_ref
-npx supabase db push
+# Install deps
+npm install --legacy-peer-deps
+
+# Set environment variables
+cp .env.local.example .env.local
+# Fill in: EXPO_PUBLIC_SUPABASE_URL, EXPO_PUBLIC_SUPABASE_ANON_KEY, EXPO_PUBLIC_MAPBOX_TOKEN
+
+# Build and run on iOS Simulator
+npx expo run:ios
 ```
 
-### Run
+> ⚠️ This app uses @rnmapbox/maps which requires a native build. It will NOT run in Expo Go.
 
-```bash
-npm install
-npx expo start
-```
+### First Run
 
-### Tests
+After the native build completes (3–5 min), Metro connects automatically. From then on, `npx expo start --dev-client` hot-reloads JS changes without rebuilding.
 
-```bash
-npx jest
-```
-
-## Architecture Notes
-
-**Anonymized location:** Raw GPS coordinates never leave the device. Pings are snapped to the nearest venue within 50m or bucketed to neighborhood level before being sent. No user ID is stored with pings.
-
-**Prediction scoring:** Runs nightly at 2am via a Supabase edge function. A prediction is correct if the venue's final heat score exceeds its historical average for that day/time bucket. Early calls (made before the venue crosses its 75th-percentile heat threshold) score 2x points.
-
-**Chicago launch:** The app launches with 30 seeded venues across 6 neighborhoods: Wicker Park, Logan Square, River North, Wrigleyville, Pilsen, West Loop.
+---
 
 ## Deployment
 
-See [DEPLOYMENT.md](DEPLOYMENT.md) for full deployment instructions.
+See [DEPLOYMENT.md](./DEPLOYMENT.md) for:
+- EAS Build setup and secrets
+- Supabase migrations via CLI
+- Nightly scoring cron job configuration
+
+---
+
+## Scoring Logic
+
+```typescript
+// From src/lib/scoring.ts
+function scorePrediction(input: ScoreInput): ScoreOutput {
+  const isCorrect = input.finalHeatScore > input.historicalAvgHeat;
+  
+  // Boldness: called before the venue hit p75 heat = 2x points
+  const boldness = input.heatAtCallTime < input.p75Heat ? 2.0 : 0.5;
+  
+  return {
+    outcome: isCorrect ? 'correct' : 'incorrect',
+    boldnessScore: boldness,
+    pointsAwarded: isCorrect ? BASE_POINTS * boldness : 0,
+  };
+}
+```
+
+The nightly edge function (`supabase/functions/score-predictions`) runs all pending predictions against final venue heat scores and awards points.
+
+---
+
+## What's Next
+
+- [ ] Leaderboard — rank users by heat_score
+- [ ] Insider tips — community-sourced venue knowledge
+- [ ] Social follows — see predictions from people you follow
+- [ ] Neighborhood-level predictions
+- [ ] TestFlight distribution (Apple Developer enrollment pending)

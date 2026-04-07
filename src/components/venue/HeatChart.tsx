@@ -34,7 +34,7 @@ const styles = StyleSheet.create({
   label: { color: '#888', fontSize: 12, marginBottom: 8 },
   chart: { flexDirection: 'row', alignItems: 'flex-end', gap: 4, height: 80 },
   barContainer: { alignItems: 'center', flex: 1 },
-  bar: { width: '80%', backgroundColor: '#FF6B35', borderRadius: 2 },
+  bar: { width: '80%', backgroundColor: '#3B82F6', borderRadius: 2 },
   hour: { color: '#555', fontSize: 9, marginTop: 2 },
   empty: { color: '#555', fontSize: 12, fontStyle: 'italic' },
 });
