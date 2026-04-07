@@ -11,7 +11,6 @@ export function VenueMarker({ venue, onPress }: Props) {
   return (
     <MapboxGL.MarkerView
       coordinate={[venue.coordinates.lng, venue.coordinates.lat]}
-      id={venue.id}
     >
       <TouchableOpacity style={styles.marker} onPress={() => onPress(venue)}>
         <Text style={styles.dot}>●</Text>
