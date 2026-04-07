@@ -28,7 +28,7 @@
       "expo-location",
       [
         "@rnmapbox/maps",
-        { "RNMapboxMapsDownloadToken": "YOUR_MAPBOX_SECRET_TOKEN" }
+        { "RNMapboxMapsDownloadToken": "sk.eyJ1IjoiY29ubm9yZXZhbnMiLCJhIjoiY21ubzVlZ2tuMjB2bTJ3cHJpbjlnMmVyNSJ9.XkPkB7jof0EMTyGh8y_70g" }
       ]
     ],
     "experiments": {
