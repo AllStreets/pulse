@@ -3,6 +3,7 @@ import { StyleSheet, View } from 'react-native';
 import MapboxGL from '@rnmapbox/maps';
 import { HeatmapLayer } from '@/components/map/HeatmapLayer';
 import { VenueMarker } from '@/components/map/VenueMarker';
+import { VenueSheet } from '@/components/venue/VenueSheet';
 import { useHeatmap } from '@/hooks/useHeatmap';
 import type { Venue } from '@/types';
 
@@ -27,7 +28,7 @@ export default function MapScreen() {
           <VenueMarker key={venue.id} venue={venue} onPress={setSelectedVenue} />
         ))}
       </MapboxGL.MapView>
-      {/* VenueSheet will be added in Task 8 */}
+      <VenueSheet venue={selectedVenue} onClose={() => setSelectedVenue(null)} />
     </View>
   );
 }
