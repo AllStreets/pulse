@@ -16,7 +16,7 @@ export default function RootLayout() {
     } else if (session && inAuthGroup) {
       router.replace('/(tabs)');
     }
-  }, [session, loading]);
+  }, [session, loading, segments, router]);
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
