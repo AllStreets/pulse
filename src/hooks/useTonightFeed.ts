@@ -44,7 +44,7 @@ export function useTonightFeed(userId: string | null) {
   }
 
   async function fetchHotVenues() {
-    const thirtyMinutesAgo = new Date(Date.now() - 30 * 60 * 1000).toISOString();
+    const thirtyMinutesAgo = new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString();
 
     const { data: pings } = await supabase
       .from('location_pings')

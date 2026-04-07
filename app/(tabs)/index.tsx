@@ -20,6 +20,8 @@ export default function MapScreen() {
   function adjustZoom(delta: number) {
     const next = Math.min(20, Math.max(5, zoom + delta));
     setZoom(next);
+    // setCamera with only zoomLevel — no centerCoordinate — so the map
+    // zooms around wherever the user is currently looking
     cameraRef.current?.setCamera({ zoomLevel: next, animationDuration: 200 });
   }
 
@@ -37,9 +39,7 @@ export default function MapScreen() {
       >
         <MapboxGL.Camera
           ref={cameraRef}
-          zoomLevel={zoom}
-          centerCoordinate={CHICAGO_CENTER}
-          animationMode="none"
+          defaultSettings={{ zoomLevel: 10.5, centerCoordinate: CHICAGO_CENTER }}
         />
         <HeatmapLayer points={heatPoints} />
         <VenueLayer venues={venues} onPress={setSelectedVenue} />
