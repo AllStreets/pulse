@@ -74,10 +74,13 @@ export async function startBackgroundLocation() {
   const { status } = await Location.getBackgroundPermissionsAsync();
   if (status !== 'granted') return;
 
+  const alreadyRunning = await TaskManager.isTaskRegisteredAsync(LOCATION_TASK_NAME);
+  if (alreadyRunning) return;
+
   await Location.startLocationUpdatesAsync(LOCATION_TASK_NAME, {
     accuracy: Location.Accuracy.Balanced,
-    timeInterval: 120_000,   // every 2 minutes
-    distanceInterval: 50,    // or every 50m moved
+    timeInterval: 120_000,
+    distanceInterval: 50,
     showsBackgroundLocationIndicator: false,
     foregroundService: {
       notificationTitle: 'Pulse',
