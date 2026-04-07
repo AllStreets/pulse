@@ -9,7 +9,7 @@ import type { Venue } from '@/types';
 
 MapboxGL.setAccessToken(process.env.EXPO_PUBLIC_MAPBOX_TOKEN!);
 
-const CHICAGO_CENTER: [number, number] = [-87.6298, 41.8781];
+const CHICAGO_CENTER: [number, number] = [-87.6594, 41.9036];
 
 export default function MapScreen() {
   const { venues, heatPoints } = useHeatmap();
@@ -28,7 +28,7 @@ export default function MapScreen() {
         scaleBarEnabled={false}
       >
         <MapboxGL.Camera
-          zoomLevel={12}
+          zoomLevel={10.5}
           centerCoordinate={CHICAGO_CENTER}
           animationMode="none"
         />
@@ -37,7 +37,7 @@ export default function MapScreen() {
           <VenueMarker key={venue.id} venue={venue} onPress={setSelectedVenue} />
         ))}
       </MapboxGL.MapView>
-      <VenueSheet venue={selectedVenue} onClose={() => setSelectedVenue(null)} />
+      {selectedVenue && <VenueSheet venue={selectedVenue} onClose={() => setSelectedVenue(null)} />}
     </View>
   );
 }

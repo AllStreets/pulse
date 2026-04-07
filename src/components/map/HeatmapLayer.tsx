@@ -25,13 +25,15 @@ export function HeatmapLayer({ points }: Props) {
           heatmapIntensity: 1.5,
           heatmapColor: [
             'interpolate', ['linear'], ['heatmap-density'],
-            0, 'rgba(0,0,0,0)',
-            0.2, 'rgba(59,130,246,0.3)',
-            0.5, 'rgba(59,130,246,0.7)',
-            1, 'rgba(59,130,246,1)',
+            0,   'rgba(0,0,0,0)',
+            0.1, 'rgba(255,235,0,0.4)',
+            0.3, 'rgba(255,165,0,0.6)',
+            0.6, 'rgba(255,80,0,0.8)',
+            0.8, 'rgba(220,20,20,0.9)',
+            1,   'rgba(180,0,0,1)',
           ],
-          heatmapRadius: 40,
-          heatmapOpacity: 0.8,
+          heatmapRadius: 50,
+          heatmapOpacity: 0.85,
         }}
       />
     </MapboxGL.ShapeSource>
