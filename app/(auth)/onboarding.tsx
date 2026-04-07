@@ -6,9 +6,14 @@ export default function OnboardingScreen() {
   const router = useRouter();
 
   async function requestLocation() {
-    await Location.requestForegroundPermissionsAsync();
-    await Location.requestBackgroundPermissionsAsync();
-    router.replace('/(tabs)');
+    try {
+      await Location.requestForegroundPermissionsAsync();
+      await Location.requestBackgroundPermissionsAsync();
+    } catch {
+      // Permission APIs can throw if already in a denied state — still navigate
+    } finally {
+      router.replace('/(tabs)');
+    }
   }
 
   function skipLocation() {

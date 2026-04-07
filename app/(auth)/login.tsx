@@ -14,20 +14,24 @@ export default function LoginScreen() {
 
   async function handleSubmit() {
     setLoading(true);
-    if (isSignUp) {
-      if (!username.trim()) {
-        Alert.alert('Username required');
-        setLoading(false);
-        return;
+    try {
+      if (isSignUp) {
+        if (!username.trim()) {
+          Alert.alert('Username required');
+          return;
+        }
+        const { error } = await signUpWithEmail(email, password, username.trim());
+        if (error) Alert.alert('Sign up failed', error.message);
+        else router.replace('/(auth)/onboarding');
+      } else {
+        const { error } = await signInWithEmail(email, password);
+        if (error) Alert.alert('Login failed', error.message);
       }
-      const { error } = await signUpWithEmail(email, password, username.trim());
-      if (error) Alert.alert('Sign up failed', error.message);
-      else router.replace('/(auth)/onboarding');
-    } else {
-      const { error } = await signInWithEmail(email, password);
-      if (error) Alert.alert('Login failed', error.message);
+    } catch (e: any) {
+      Alert.alert('Something went wrong', e?.message ?? 'Please try again.');
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   }
 
   return (

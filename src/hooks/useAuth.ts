@@ -9,11 +9,26 @@ export function useAuth() {
   const setProfile = useUserStore((s) => s.setProfile);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      if (session) fetchProfile(session.user.id);
-      setLoading(false);
-    });
+    async function fetchProfile(userId: string) {
+      const { data } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .single();
+      if (data) setProfile(data);
+    }
+
+    supabase.auth.getSession()
+      .then(({ data: { session } }) => {
+        setSession(session);
+        if (session) fetchProfile(session.user.id);
+      })
+      .catch(() => {
+        // Session fetch failed — user will be sent to login
+      })
+      .finally(() => {
+        setLoading(false);
+      });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
@@ -22,16 +37,7 @@ export function useAuth() {
     });
 
     return () => subscription.unsubscribe();
-  }, []);
-
-  async function fetchProfile(userId: string) {
-    const { data } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', userId)
-      .single();
-    if (data) setProfile(data);
-  }
+  }, [setProfile]);
 
   async function signInWithEmail(email: string, password: string) {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
@@ -48,7 +54,8 @@ export function useAuth() {
   }
 
   async function signOut() {
-    await supabase.auth.signOut();
+    const { error } = await supabase.auth.signOut();
+    return { error };
   }
 
   return { session, loading, signInWithEmail, signUpWithEmail, signOut };
