@@ -6,6 +6,7 @@ export interface HotVenue {
   venue: Venue;
   pingCount: number;
   rank: number;
+  callerCount: number;
 }
 
 export interface PredictionWithVenue extends Prediction {
@@ -51,7 +52,10 @@ export function useTonightFeed(userId: string | null) {
       if (p.venue_id) counts.set(p.venue_id, (counts.get(p.venue_id) ?? 0) + 1);
     }
 
-    if (counts.size === 0) return;
+    if (counts.size === 0) {
+      setHotVenues([]);
+      return;
+    }
 
     const venueIds = Array.from(counts.keys());
     const { data: venueData } = await supabase
@@ -67,7 +71,31 @@ export function useTonightFeed(userId: string | null) {
       .slice(0, 15)
       .map((item, i) => ({ ...item, rank: i + 1 }));
 
-    setHotVenues(sorted);
+    if (sorted.length === 0) {
+      setHotVenues([]);
+      return;
+    }
+
+    const hotVenueIds = sorted.map(item => item.venue.id);
+    const today = new Date().toISOString().split('T')[0];
+    const { data: predRows } = await supabase
+      .from('predictions')
+      .select('target_id')
+      .eq('target_type', 'venue')
+      .in('target_id', hotVenueIds)
+      .gte('created_at', `${today}T00:00:00`);
+
+    const callerCounts = new Map<string, number>();
+    for (const row of predRows ?? []) {
+      callerCounts.set(row.target_id, (callerCounts.get(row.target_id) ?? 0) + 1);
+    }
+
+    const withCallers = sorted.map(item => ({
+      ...item,
+      callerCount: callerCounts.get(item.venue.id) ?? 0,
+    }));
+
+    setHotVenues(withCallers);
   }
 
   async function fetchMyPredictions(uid: string) {

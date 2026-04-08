@@ -192,6 +192,12 @@ export default function TonightScreen() {
                     <View style={styles.pingRow}>
                       <Ionicons name="radio-button-on" size={10} color={color} />
                       <Text style={[styles.pingCount, { color }]}>{item.pingCount} live signal{item.pingCount !== 1 ? 's' : ''}</Text>
+                      {item.callerCount > 0 && (
+                        <>
+                          <Text style={styles.pingDot}>·</Text>
+                          <Text style={styles.callerCountText}>{item.callerCount} caller{item.callerCount !== 1 ? 's' : ''} tonight</Text>
+                        </>
+                      )}
                     </View>
                   </View>
                 </View>
@@ -307,6 +313,8 @@ const styles = StyleSheet.create({
   venueMeta: { color: '#555', fontSize: 12 },
   pingRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 2 },
   pingCount: { fontSize: 12, fontWeight: '600' },
+  pingDot: { color: '#444', fontSize: 12 },
+  callerCountText: { color: '#666', fontSize: 12 },
 
   cardRight: { marginLeft: 12 },
   callBtn: { backgroundColor: '#3B82F6', paddingVertical: 8, paddingHorizontal: 14, borderRadius: 10 },
