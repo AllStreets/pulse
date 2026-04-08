@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
+import Constants from 'expo-constants';
 import { supabase } from '@/lib/supabase';
 
 Notifications.setNotificationHandler({
@@ -13,6 +14,9 @@ Notifications.setNotificationHandler({
 });
 
 export async function registerForPushNotifications(userId: string): Promise<void> {
+  // Push tokens don't work on simulators — skip silently
+  if (!Constants.isDevice) return;
+
   if (Platform.OS === 'android') {
     await Notifications.setNotificationChannelAsync('default', {
       name: 'default',
