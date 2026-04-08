@@ -5,6 +5,7 @@ import Animated, {
   useAnimatedStyle,
   withTiming,
   withDelay,
+  withSequence,
   Easing,
 } from 'react-native-reanimated';
 
@@ -19,10 +20,14 @@ export function Toast({ message, visible }: Props) {
 
   useEffect(() => {
     if (visible) {
-      translateY.value = withTiming(0, { duration: 250, easing: Easing.out(Easing.ease) });
-      opacity.value = withTiming(1, { duration: 200 });
-      translateY.value = withDelay(2000, withTiming(-60, { duration: 300 }));
-      opacity.value = withDelay(2000, withTiming(0, { duration: 300 }));
+      translateY.value = withSequence(
+        withTiming(0, { duration: 250, easing: Easing.out(Easing.ease) }),
+        withDelay(2000, withTiming(-60, { duration: 300 }))
+      );
+      opacity.value = withSequence(
+        withTiming(1, { duration: 200 }),
+        withDelay(2000, withTiming(0, { duration: 300 }))
+      );
     }
   }, [visible]);
 
