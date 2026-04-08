@@ -25,6 +25,7 @@ export default function ProfileScreen() {
     supabase
       .from('location_pings')
       .select('id', { count: 'exact', head: true })
+      .eq('user_id', profile.id)
       .then(({ count }) => setPingCount(count ?? 0));
 
     Notifications.getPermissionsAsync().then(({ status }) => {
