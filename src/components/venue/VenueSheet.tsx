@@ -29,9 +29,7 @@ export function VenueSheet({ venue, onClose }: Props) {
     if (index === -1) onClose();
   }, [onClose]);
 
-  if (!venue) return null;
-
-  const alreadyCalled = hasCalledTarget(venue.id);
+  const alreadyCalled = venue ? hasCalledTarget(venue.id) : false;
 
   async function handleCall() {
     if (alreadyCalled || !canCall) return;
@@ -49,60 +47,62 @@ export function VenueSheet({ venue, onClose }: Props) {
       handleIndicatorStyle={styles.handle}
     >
       <BottomSheetScrollView contentContainerStyle={styles.content}>
-
-        {/* Header */}
-        <View style={styles.header}>
-          <View style={styles.headerLeft}>
-            <Text style={styles.name}>{venue.name}</Text>
-            <View style={styles.chips}>
-              {venue.category && <View style={styles.chip}><Text style={styles.chipText}>{venue.category}</Text></View>}
-              {venue.music_genre && <View style={styles.chip}><Text style={styles.chipText}>{venue.music_genre}</Text></View>}
-              {venue.age_policy && <View style={[styles.chip, styles.chipAlt]}><Text style={styles.chipAltText}>{venue.age_policy}</Text></View>}
-              {venue.cover && <View style={[styles.chip, styles.chipAlt]}><Text style={styles.chipAltText}>{venue.cover} cover</Text></View>}
+        {venue && (
+          <>
+            {/* Header */}
+            <View style={styles.header}>
+              <View style={styles.headerLeft}>
+                <Text style={styles.name}>{venue.name}</Text>
+                <View style={styles.chips}>
+                  {venue.category && <View style={styles.chip}><Text style={styles.chipText}>{venue.category}</Text></View>}
+                  {venue.music_genre && <View style={styles.chip}><Text style={styles.chipText}>{venue.music_genre}</Text></View>}
+                  {venue.age_policy && <View style={[styles.chip, styles.chipAlt]}><Text style={styles.chipAltText}>{venue.age_policy}</Text></View>}
+                  {venue.cover && <View style={[styles.chip, styles.chipAlt]}><Text style={styles.chipAltText}>{venue.cover} cover</Text></View>}
+                </View>
+              </View>
             </View>
-          </View>
-        </View>
 
-        {/* Stats row */}
-        <View style={styles.statsRow}>
-          <View style={styles.statBox}>
-            <Text style={styles.statValue}>{predictionCount}</Text>
-            <Text style={styles.statLabel}>calls tonight</Text>
-          </View>
-          <View style={styles.statDivider} />
-          <View style={styles.statBox}>
-            <Text style={styles.statValue}>{callsRemaining}</Text>
-            <Text style={styles.statLabel}>calls left</Text>
-          </View>
-        </View>
-
-        {/* Call It button */}
-        <TouchableOpacity
-          style={[
-            styles.callBtn,
-            alreadyCalled && styles.callBtnCalled,
-            !canCall && !alreadyCalled && styles.callBtnDisabled,
-          ]}
-          onPress={handleCall}
-          disabled={alreadyCalled || !canCall}
-          activeOpacity={0.8}
-        >
-          {alreadyCalled ? (
-            <View style={styles.callBtnInner}>
-              <Ionicons name="checkmark-circle" size={18} color="#4CAF50" />
-              <Text style={[styles.callBtnText, { color: '#4CAF50' }]}>Called</Text>
+            {/* Stats row */}
+            <View style={styles.statsRow}>
+              <View style={styles.statBox}>
+                <Text style={styles.statValue}>{predictionCount}</Text>
+                <Text style={styles.statLabel}>calls tonight</Text>
+              </View>
+              <View style={styles.statDivider} />
+              <View style={styles.statBox}>
+                <Text style={styles.statValue}>{callsRemaining}</Text>
+                <Text style={styles.statLabel}>calls left</Text>
+              </View>
             </View>
-          ) : (
-            <Text style={styles.callBtnText}>{canCall ? 'Call It' : 'No calls left tonight'}</Text>
-          )}
-        </TouchableOpacity>
 
-        {/* Heat chart */}
-        <HeatChart points={tonightTimeline} label="Activity tonight" />
+            {/* Call It button */}
+            <TouchableOpacity
+              style={[
+                styles.callBtn,
+                alreadyCalled && styles.callBtnCalled,
+                !canCall && !alreadyCalled && styles.callBtnDisabled,
+              ]}
+              onPress={handleCall}
+              disabled={alreadyCalled || !canCall}
+              activeOpacity={0.8}
+            >
+              {alreadyCalled ? (
+                <View style={styles.callBtnInner}>
+                  <Ionicons name="checkmark-circle" size={18} color="#4CAF50" />
+                  <Text style={[styles.callBtnText, { color: '#4CAF50' }]}>Called</Text>
+                </View>
+              ) : (
+                <Text style={styles.callBtnText}>{canCall ? 'Call It' : 'No calls left tonight'}</Text>
+              )}
+            </TouchableOpacity>
 
-        {/* Vibe tags */}
-        <VibeTags tags={vibeTags} />
+            {/* Heat chart */}
+            <HeatChart points={tonightTimeline} label="Activity tonight" />
 
+            {/* Vibe tags */}
+            <VibeTags tags={vibeTags} />
+          </>
+        )}
       </BottomSheetScrollView>
     </BottomSheet>
   );

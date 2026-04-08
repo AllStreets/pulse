@@ -29,13 +29,6 @@ export function useTonightFeed(userId: string | null) {
 
   useEffect(() => {
     fetchFeed();
-
-    const channel = supabase
-      .channel('tonight-feed')
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'location_pings' }, fetchFeed)
-      .subscribe();
-
-    return () => { supabase.removeChannel(channel); };
   }, [userId]);
 
   async function fetchFeed() {

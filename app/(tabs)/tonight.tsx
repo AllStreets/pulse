@@ -1,11 +1,21 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
+import { useFocusEffect } from 'expo-router';
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet, ActivityIndicator, RefreshControl } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTonightFeed } from '@/hooks/useTonightFeed';
 import { usePredictions } from '@/hooks/usePredictions';
 import { useUserStore } from '@/stores/userStore';
+import { useSportsTonight } from '@/hooks/useSportsTonight';
+import { useEventsTonight } from '@/hooks/useEventsTonight';
+import { useNeighborhoods } from '@/hooks/useNeighborhoods';
+import { useHeatmap } from '@/hooks/useHeatmap';
 import { VenueSheet } from '@/components/venue/VenueSheet';
+import { NeighborhoodSheet } from '@/components/map/NeighborhoodSheet';
+import { GameBanner } from '@/components/tonight/GameBanner';
+import { SceneSection } from '@/components/tonight/SceneSection';
+import { EventsList } from '@/components/tonight/EventsList';
 import type { Venue } from '@/types';
+import type { NeighborhoodMeta } from '@/hooks/useNeighborhoods';
 
 const HEAT_COLORS = ['#FFD700', '#FFA500', '#FF6B00', '#FF2200', '#CC0000'];
 
@@ -27,8 +37,26 @@ export default function TonightScreen() {
   const profile = useUserStore((s) => s.profile);
   const { hotVenues, myPredictions, loading, refresh } = useTonightFeed(profile?.id ?? null);
   const { callsRemaining, hasCalledTarget, makeCall, canCall } = usePredictions(profile?.id ?? null);
+  const { games } = useSportsTonight();
+  const { events } = useEventsTonight();
+  const { neighborhoods } = useNeighborhoods();
+  const { venues } = useHeatmap();
   const [selectedVenue, setSelectedVenue] = useState<Venue | null>(null);
+  const [selectedNeighborhood, setSelectedNeighborhood] = useState<NeighborhoodMeta | null>(null);
   const [refreshing, setRefreshing] = useState(false);
+
+  useFocusEffect(
+    useCallback(() => {
+      return () => {
+        setSelectedNeighborhood(null);
+        setSelectedVenue(null);
+      };
+    }, [])
+  );
+
+  const neighborhoodVenues = selectedNeighborhood
+    ? venues.filter(v => v.neighborhood_id === selectedNeighborhood.id)
+    : [];
 
   async function handleRefresh() {
     setRefreshing(true);
@@ -42,6 +70,7 @@ export default function TonightScreen() {
 
   const now = new Date();
   const timeStr = now.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+  const liveGames = games.filter(g => g.status === 'in');
 
   return (
     <View style={styles.root}>
@@ -53,7 +82,15 @@ export default function TonightScreen() {
         {/* Header */}
         <View style={styles.header}>
           <View>
-            <Text style={styles.city}>Chicago</Text>
+            <View style={styles.cityRow}>
+              <Text style={styles.city}>Chicago</Text>
+              {liveGames.length > 0 && (
+                <View style={styles.liveGamePill}>
+                  <Ionicons name="radio-button-on" size={10} color="#4CAF50" />
+                  <Text style={styles.liveGameText}>{liveGames.map(g => g.chicagoTeam).join(', ')} live</Text>
+                </View>
+              )}
+            </View>
             <Text style={styles.time}>{timeStr}</Text>
           </View>
           <View style={styles.callsPill}>
@@ -61,6 +98,9 @@ export default function TonightScreen() {
             <Text style={styles.callsLabel}>calls left</Text>
           </View>
         </View>
+
+        {/* Game banner */}
+        <GameBanner games={games} />
 
         {/* Hot Right Now */}
         <View style={styles.sectionHeader}>
@@ -98,7 +138,6 @@ export default function TonightScreen() {
                     </View>
                   </View>
                 </View>
-
                 <View style={styles.cardRight}>
                   {called ? (
                     <View style={styles.calledBadge}>
@@ -119,6 +158,16 @@ export default function TonightScreen() {
             );
           })
         )}
+
+        {/* Scenes Tonight */}
+        <View style={{ marginTop: 32 }}>
+          <SceneSection neighborhoods={neighborhoods} onPress={setSelectedNeighborhood} />
+        </View>
+
+        {/* Events Tonight */}
+        <View style={{ marginTop: 16 }}>
+          <EventsList events={events} />
+        </View>
 
         {/* Your Calls Tonight */}
         {myPredictions.length > 0 && (
@@ -150,9 +199,13 @@ export default function TonightScreen() {
         <View style={{ height: 40 }} />
       </ScrollView>
 
-      {selectedVenue && (
-        <VenueSheet venue={selectedVenue} onClose={() => setSelectedVenue(null)} />
-      )}
+      <VenueSheet venue={selectedVenue} onClose={() => setSelectedVenue(null)} />
+
+      <NeighborhoodSheet
+        neighborhood={selectedNeighborhood}
+        venues={neighborhoodVenues}
+        onClose={() => setSelectedNeighborhood(null)}
+      />
     </View>
   );
 }
@@ -162,8 +215,11 @@ const styles = StyleSheet.create({
   container: { flex: 1 },
   content: { paddingTop: 60, paddingHorizontal: 20 },
 
-  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 32 },
+  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 24 },
+  cityRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   city: { color: '#fff', fontSize: 28, fontWeight: '800', letterSpacing: -0.5 },
+  liveGamePill: { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: '#0d1f0d', borderRadius: 20, paddingHorizontal: 8, paddingVertical: 3, borderWidth: 1, borderColor: '#4CAF5040' },
+  liveGameText: { color: '#4CAF50', fontSize: 10, fontWeight: '600' },
   time: { color: '#555', fontSize: 14, marginTop: 2 },
 
   callsPill: { backgroundColor: '#111', borderRadius: 20, paddingHorizontal: 16, paddingVertical: 10, alignItems: 'center', borderWidth: 1, borderColor: '#222' },
@@ -175,15 +231,9 @@ const styles = StyleSheet.create({
   empty: { color: '#444', fontSize: 14, fontStyle: 'italic', marginTop: 8 },
 
   venueCard: {
-    backgroundColor: '#111',
-    borderRadius: 14,
-    padding: 16,
-    marginBottom: 10,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    borderWidth: 1,
-    borderColor: '#1a1a1a',
+    backgroundColor: '#111', borderRadius: 14, padding: 16, marginBottom: 10,
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    borderWidth: 1, borderColor: '#1a1a1a',
   },
   cardLeft: { flexDirection: 'row', alignItems: 'center', flex: 1, gap: 12 },
   rankBadge: { width: 38, height: 38, borderRadius: 10, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },

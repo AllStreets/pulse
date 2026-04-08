@@ -63,14 +63,7 @@ export function useHeatmap() {
     fetchVenues();
     fetchHeatPoints();
 
-    const channel = supabase
-      .channel('location_pings')
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'location_pings' }, () => {
-        fetchHeatPoints();
-      })
-      .subscribe();
-
-    return () => { supabase.removeChannel(channel); };
+    return () => {};
   }, []);
 
   return { venues, heatPoints };
