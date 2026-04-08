@@ -153,7 +153,7 @@ export default function TonightScreen() {
       <Toast key={toastKey} message="Updated" visible={toastVisible} />
       <ScrollView
         style={styles.container}
-        contentContainerStyle={styles.content}
+        contentContainerStyle={[styles.content, browseMode && { paddingTop: 16 }]}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor="#666" />}
       >
         {/* Header */}

@@ -1,5 +1,6 @@
-import { ScrollView, View, Text, TouchableOpacity, StyleSheet, Switch } from 'react-native';
+import { ScrollView, View, Text, TouchableOpacity, StyleSheet, Switch, ActivityIndicator } from 'react-native';
 import { useEffect, useState } from 'react';
+import { useRouter } from 'expo-router';
 import { useAuth } from '@/hooks/useAuth';
 import { useUserStore } from '@/stores/userStore';
 import { usePredictions } from '@/hooks/usePredictions';
@@ -15,8 +16,10 @@ const BADGE_COLORS: Record<string, string> = {
 };
 
 export default function ProfileScreen() {
-  const { signOut } = useAuth();
+  const { signOut, session, loading: authLoading } = useAuth();
   const profile = useUserStore((s) => s.profile);
+  const browseMode = useUserStore((s) => s.browseMode);
+  const router = useRouter();
   const { predictions, callsRemaining } = usePredictions(profile?.id ?? null);
   const [pingCount, setPingCount] = useState<number | null>(null);
   const [notifEnabled, setNotifEnabled] = useState(false);
@@ -38,7 +41,30 @@ export default function ProfileScreen() {
     });
   }, [profile?.id]);
 
-  if (!profile) return null;
+  if (!profile && (authLoading || session)) {
+    return (
+      <View style={styles.guestContainer}>
+        <ActivityIndicator color="#3B82F6" />
+      </View>
+    );
+  }
+
+  if (!profile) {
+    return (
+      <View style={styles.guestContainer}>
+        <Text style={styles.guestTitle}>Sign up to track your calls</Text>
+        <Text style={styles.guestBody}>Create a free account to make predictions, earn points, and see how you rank.</Text>
+        <TouchableOpacity style={styles.guestBtn} onPress={() => router.replace('/(auth)/login?signup=1')}>
+          <Text style={styles.guestBtnText}>Sign Up Free</Text>
+        </TouchableOpacity>
+        {browseMode && (
+          <TouchableOpacity onPress={() => router.replace('/(auth)/login')} style={{ marginTop: 12 }}>
+            <Text style={styles.guestLink}>Already have an account? Log in</Text>
+          </TouchableOpacity>
+        )}
+      </View>
+    );
+  }
 
   const scored = predictions.filter((p) => p.outcome !== 'pending' && p.outcome !== 'voided');
   const correct = scored.filter((p) => p.outcome === 'correct').length;
@@ -196,4 +222,11 @@ const styles = StyleSheet.create({
 
   signOut: { marginTop: 40, paddingVertical: 14, alignItems: 'center' },
   signOutText: { color: '#333', fontSize: 14 },
+
+  guestContainer: { flex: 1, backgroundColor: '#0a0a0a', justifyContent: 'center', alignItems: 'center', padding: 32 },
+  guestTitle: { color: '#fff', fontSize: 22, fontWeight: '800', textAlign: 'center', marginBottom: 10 },
+  guestBody: { color: '#555', fontSize: 15, textAlign: 'center', lineHeight: 22, marginBottom: 28 },
+  guestBtn: { backgroundColor: '#3B82F6', paddingVertical: 14, paddingHorizontal: 32, borderRadius: 12 },
+  guestBtnText: { color: '#fff', fontSize: 16, fontWeight: '700' },
+  guestLink: { color: '#444', fontSize: 13 },
 });

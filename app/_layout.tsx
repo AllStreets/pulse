@@ -6,6 +6,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuth } from '@/hooks/useAuth';
 import { registerForPushNotifications, useNotificationListener } from '@/hooks/useNotifications';
 import { useUserStore } from '@/stores/userStore';
+import { supabase } from '@/lib/supabase';
 
 export default function RootLayout() {
   const { session, loading } = useAuth();
@@ -34,6 +35,15 @@ export default function RootLayout() {
       registerForPushNotifications(session.user.id);
     }
   }, [session?.user?.id]);
+
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+      if (event === 'PASSWORD_RECOVERY') {
+        router.replace('/(auth)/reset-password');
+      }
+    });
+    return () => subscription.unsubscribe();
+  }, [router]);
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>

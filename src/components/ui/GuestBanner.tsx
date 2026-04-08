@@ -1,17 +1,19 @@
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useUserStore } from '@/stores/userStore';
 
 export function GuestBanner() {
   const browseMode = useUserStore((s) => s.browseMode);
   const router = useRouter();
+  const insets = useSafeAreaInsets();
 
   if (!browseMode) return null;
 
   return (
-    <View style={styles.banner}>
+    <View style={[styles.banner, { paddingTop: insets.top + 8 }]}>
       <Text style={styles.text}>Browsing as guest</Text>
-      <TouchableOpacity onPress={() => router.replace('/(auth)/login')}>
+      <TouchableOpacity onPress={() => router.replace('/(auth)/login?signup=1')}>
         <Text style={styles.cta}>Sign up free →</Text>
       </TouchableOpacity>
     </View>
@@ -25,7 +27,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     backgroundColor: '#111',
     paddingHorizontal: 20,
-    paddingVertical: 10,
+    paddingBottom: 10,
     borderBottomWidth: 1,
     borderBottomColor: '#1a1a1a',
   },

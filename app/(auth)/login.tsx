@@ -1,18 +1,32 @@
 import { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useAuth } from '@/hooks/useAuth';
 import { useUserStore } from '@/stores/userStore';
+import { supabase } from '@/lib/supabase';
 
 export default function LoginScreen() {
+  const { signup } = useLocalSearchParams<{ signup?: string }>();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [isSignUp, setIsSignUp] = useState(false);
+  const [isSignUp, setIsSignUp] = useState(signup === '1');
   const [username, setUsername] = useState('');
   const [loading, setLoading] = useState(false);
   const { signInWithEmail, signUpWithEmail } = useAuth();
   const router = useRouter();
   const setBrowseMode = useUserStore((s) => s.setBrowseMode);
+
+  async function handleForgotPassword() {
+    if (!email.trim()) {
+      Alert.alert('Enter your email first', 'Type your email above then tap Forgot Password.');
+      return;
+    }
+    const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
+      redirectTo: 'pulse://',
+    });
+    if (error) Alert.alert('Error', error.message);
+    else Alert.alert('Check your email', 'A password reset link has been sent to ' + email.trim());
+  }
 
   async function handleSubmit() {
     setLoading(true);
@@ -70,6 +84,11 @@ export default function LoginScreen() {
       <TouchableOpacity style={styles.button} onPress={handleSubmit} disabled={loading}>
         <Text style={styles.buttonText}>{loading ? '...' : isSignUp ? 'Create Account' : 'Log In'}</Text>
       </TouchableOpacity>
+      {!isSignUp && (
+        <TouchableOpacity onPress={handleForgotPassword} style={styles.forgotBtn}>
+          <Text style={styles.forgotText}>Forgot password?</Text>
+        </TouchableOpacity>
+      )}
       <TouchableOpacity onPress={() => setIsSignUp(!isSignUp)}>
         <Text style={styles.toggle}>
           {isSignUp ? 'Already have an account? Log in' : "Don't have an account? Sign up"}
@@ -95,6 +114,8 @@ const styles = StyleSheet.create({
   input: { backgroundColor: '#1a1a1a', color: '#fff', padding: 16, borderRadius: 12, marginBottom: 12, fontSize: 16 },
   button: { backgroundColor: '#3B82F6', padding: 16, borderRadius: 12, alignItems: 'center', marginTop: 8 },
   buttonText: { color: '#fff', fontSize: 16, fontWeight: '700' },
+  forgotBtn: { alignItems: 'center', marginTop: 14 },
+  forgotText: { color: '#444', fontSize: 13 },
   toggle: { color: '#666', textAlign: 'center', marginTop: 20, fontSize: 14 },
   browseBtn: { marginTop: 12, alignItems: 'center' },
   browseText: { color: '#3B82F6', fontSize: 13, opacity: 0.7 },
