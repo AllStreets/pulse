@@ -2,6 +2,7 @@ import '@/lib/locationTask';
 import { useEffect } from 'react';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuth } from '@/hooks/useAuth';
 import { registerForPushNotifications, useNotificationListener } from '@/hooks/useNotifications';
 
@@ -17,7 +18,13 @@ export default function RootLayout() {
     if (!session && !inAuthGroup) {
       router.replace('/(auth)/login');
     } else if (session && inAuthGroup) {
-      router.replace('/(tabs)');
+      AsyncStorage.getItem('onboarding_complete').then((done) => {
+        if (done) {
+          router.replace('/(tabs)');
+        } else {
+          router.replace('/(auth)/onboarding');
+        }
+      });
     }
   }, [session, loading, segments, router]);
 
