@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import BottomSheet, { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
+import Animated, { useSharedValue, useAnimatedStyle, withSequence, withTiming, withSpring } from 'react-native-reanimated';
 import { useVenue } from '@/hooks/useVenue';
 import { HeatChart } from './HeatChart';
 import { PingButton } from './PingButton';
@@ -32,10 +33,19 @@ export function VenueSheet({ venue, onClose }: Props) {
     if (index === -1) onClose();
   }, [onClose]);
 
+  const callScale = useSharedValue(1);
+  const callAnimStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: callScale.value }],
+  }));
+
   const alreadyCalled = venue ? hasCalledTarget(venue.id) : false;
 
   async function handleCall() {
     if (alreadyCalled || !canCall) return;
+    callScale.value = withSequence(
+      withTiming(0.93, { duration: 80 }),
+      withSpring(1, { damping: 6, stiffness: 200 })
+    );
     await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     await makeCall('venue', venue!.id, venue!.current_heat_score);
   }
@@ -94,25 +104,27 @@ export function VenueSheet({ venue, onClose }: Props) {
             </View>
 
             {/* Call It button */}
-            <TouchableOpacity
-              style={[
-                styles.callBtn,
-                alreadyCalled && styles.callBtnCalled,
-                !canCall && !alreadyCalled && styles.callBtnDisabled,
-              ]}
-              onPress={handleCall}
-              disabled={alreadyCalled || !canCall}
-              activeOpacity={0.8}
-            >
-              {alreadyCalled ? (
-                <View style={styles.callBtnInner}>
-                  <Ionicons name="checkmark-circle" size={18} color="#4CAF50" />
-                  <Text style={[styles.callBtnText, { color: '#4CAF50' }]}>Called</Text>
-                </View>
-              ) : (
-                <Text style={styles.callBtnText}>{canCall ? 'Call It' : 'No calls left tonight'}</Text>
-              )}
-            </TouchableOpacity>
+            <Animated.View style={callAnimStyle}>
+              <TouchableOpacity
+                style={[
+                  styles.callBtn,
+                  alreadyCalled && styles.callBtnCalled,
+                  !canCall && !alreadyCalled && styles.callBtnDisabled,
+                ]}
+                onPress={handleCall}
+                disabled={alreadyCalled || !canCall}
+                activeOpacity={0.8}
+              >
+                {alreadyCalled ? (
+                  <View style={styles.callBtnInner}>
+                    <Ionicons name="checkmark-circle" size={18} color="#4CAF50" />
+                    <Text style={[styles.callBtnText, { color: '#4CAF50' }]}>Called</Text>
+                  </View>
+                ) : (
+                  <Text style={styles.callBtnText}>{canCall ? 'Call It' : 'No calls left tonight'}</Text>
+                )}
+              </TouchableOpacity>
+            </Animated.View>
 
             {/* Ping */}
             <PingButton
