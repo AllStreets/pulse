@@ -4,6 +4,7 @@ import { View, Text, ScrollView, TouchableOpacity, StyleSheet, RefreshControl } 
 import { Ionicons } from '@expo/vector-icons';
 import Animated from 'react-native-reanimated';
 import { SkeletonBox } from '@/components/ui/SkeletonBox';
+import { Toast } from '@/components/ui/Toast';
 import { useTonightFeed } from '@/hooks/useTonightFeed';
 import { usePredictions } from '@/hooks/usePredictions';
 import { useUserStore } from '@/stores/userStore';
@@ -81,6 +82,8 @@ export default function TonightScreen() {
   const [selectedVenue, setSelectedVenue] = useState<Venue | null>(null);
   const [selectedNeighborhood, setSelectedNeighborhood] = useState<NeighborhoodMeta | null>(null);
   const [refreshing, setRefreshing] = useState(false);
+  const [toastVisible, setToastVisible] = useState(false);
+  const [toastKey, setToastKey] = useState(0);
 
   useFocusEffect(
     useCallback(() => {
@@ -99,6 +102,9 @@ export default function TonightScreen() {
     setRefreshing(true);
     await refresh();
     setRefreshing(false);
+    setToastKey(k => k + 1);
+    setToastVisible(true);
+    setTimeout(() => setToastVisible(false), 2500);
   }
 
   async function handleCall(venue: Venue) {
@@ -111,6 +117,7 @@ export default function TonightScreen() {
 
   return (
     <View style={styles.root}>
+      <Toast key={toastKey} message="Updated" visible={toastVisible} />
       <ScrollView
         style={styles.container}
         contentContainerStyle={styles.content}
@@ -148,7 +155,11 @@ export default function TonightScreen() {
         {loading ? (
           <VenueCardSkeleton />
         ) : hotVenues.length === 0 ? (
-          <Text style={styles.empty}>No live activity yet — check back later tonight</Text>
+          <View style={styles.emptyState}>
+            <Ionicons name="moon-outline" size={32} color="#333" />
+            <Text style={styles.emptyTitle}>Quiet out there</Text>
+            <Text style={styles.emptyBody}>No signals yet tonight. Check back after 9PM or pull to refresh.</Text>
+          </View>
         ) : (
           hotVenues.map((item) => {
             const called = hasCalledTarget(item.venue.id);
@@ -265,7 +276,9 @@ const styles = StyleSheet.create({
 
   sectionHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 14 },
   sectionTitle: { color: '#fff', fontSize: 18, fontWeight: '700', letterSpacing: -0.2 },
-  empty: { color: '#444', fontSize: 14, fontStyle: 'italic', marginTop: 8 },
+  emptyState: { alignItems: 'center', paddingVertical: 32, gap: 10 },
+  emptyTitle: { color: '#555', fontSize: 16, fontWeight: '700' },
+  emptyBody: { color: '#333', fontSize: 13, textAlign: 'center', lineHeight: 20, paddingHorizontal: 24 },
 
   venueCard: {
     backgroundColor: '#111', borderRadius: 14, padding: 16, marginBottom: 10,
