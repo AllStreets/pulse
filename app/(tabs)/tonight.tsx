@@ -14,9 +14,11 @@ import { useNeighborhoods } from '@/hooks/useNeighborhoods';
 import { useHeatmap } from '@/hooks/useHeatmap';
 import { VenueSheet } from '@/components/venue/VenueSheet';
 import { NeighborhoodSheet } from '@/components/map/NeighborhoodSheet';
+import { FirstCallSheet } from '@/components/tonight/FirstCallSheet';
 import { GameBanner } from '@/components/tonight/GameBanner';
 import { SceneSection } from '@/components/tonight/SceneSection';
 import { EventsList } from '@/components/tonight/EventsList';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { Venue } from '@/types';
 import type { NeighborhoodMeta } from '@/hooks/useNeighborhoods';
 
@@ -84,6 +86,7 @@ export default function TonightScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [toastVisible, setToastVisible] = useState(false);
   const [toastKey, setToastKey] = useState(0);
+  const [showFirstCallSheet, setShowFirstCallSheet] = useState(false);
 
   useFocusEffect(
     useCallback(() => {
@@ -108,6 +111,12 @@ export default function TonightScreen() {
   }
 
   async function handleCall(venue: Venue) {
+    const seen = await AsyncStorage.getItem('first_call_seen');
+    if (!seen) {
+      setShowFirstCallSheet(true);
+      await AsyncStorage.setItem('first_call_seen', 'true');
+      return;
+    }
     await makeCall('venue', venue.id, venue.current_heat_score);
   }
 
@@ -253,6 +262,11 @@ export default function TonightScreen() {
         neighborhood={selectedNeighborhood}
         venues={neighborhoodVenues}
         onClose={() => setSelectedNeighborhood(null)}
+      />
+
+      <FirstCallSheet
+        visible={showFirstCallSheet}
+        onDismiss={() => setShowFirstCallSheet(false)}
       />
     </View>
   );
