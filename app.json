@@ -14,6 +14,8 @@
     },
     "ios": {
       "bundleIdentifier": "com.pulse.app",
+      "buildNumber": "1",
+      "supportsTablet": false,
       "infoPlist": {
         "NSLocationWhenInUseUsageDescription": "Pulse uses your location to show you what's hot nearby.",
         "NSLocationAlwaysAndWhenInUseUsageDescription": "Pulse uses your background location to keep the heatmap live.",
