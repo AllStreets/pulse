@@ -2,6 +2,7 @@ import { useRef, useCallback, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import BottomSheet, { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import { Ionicons } from '@expo/vector-icons';
+import * as Haptics from 'expo-haptics';
 import { useVenue } from '@/hooks/useVenue';
 import { HeatChart } from './HeatChart';
 import { PingButton } from './PingButton';
@@ -35,6 +36,7 @@ export function VenueSheet({ venue, onClose }: Props) {
 
   async function handleCall() {
     if (alreadyCalled || !canCall) return;
+    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     await makeCall('venue', venue!.id, venue!.current_heat_score);
   }
 

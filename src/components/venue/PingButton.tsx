@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { TouchableOpacity, Text, StyleSheet, View } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Ionicons } from '@expo/vector-icons';
+import * as Haptics from 'expo-haptics';
 import { supabase } from '@/lib/supabase';
 
 interface Props {
@@ -51,6 +52,7 @@ export function PingButton({ venueId, neighborhoodId, onPinged }: Props) {
         neighborhood_id: neighborhoodId,
       });
       await AsyncStorage.setItem(pingKey(venueId), String(Date.now()));
+      await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       setCooldownLeft(COOLDOWN_MS);
       onPinged?.();
     } catch {
