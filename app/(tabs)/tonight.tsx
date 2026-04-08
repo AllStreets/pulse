@@ -1,7 +1,9 @@
 import { useState, useCallback } from 'react';
 import { useFocusEffect } from 'expo-router';
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet, ActivityIndicator, RefreshControl } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet, RefreshControl } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import Animated from 'react-native-reanimated';
+import { SkeletonBox } from '@/components/ui/SkeletonBox';
 import { useTonightFeed } from '@/hooks/useTonightFeed';
 import { usePredictions } from '@/hooks/usePredictions';
 import { useUserStore } from '@/stores/userStore';
@@ -32,6 +34,41 @@ function outcomeIcon(outcome: string): { name: React.ComponentProps<typeof Ionic
     default:          return { name: 'time-outline', color: '#888', label: 'Pending' };
   }
 }
+
+function VenueCardSkeleton() {
+  return (
+    <>
+      {[0, 1, 2].map((i) => (
+        <Animated.View
+          key={i}
+          style={[skeletonStyles.card, { opacity: 1 - i * 0.2 }]}
+        >
+          <SkeletonBox width={38} height={38} borderRadius={10} />
+          <View style={skeletonStyles.lines}>
+            <SkeletonBox height={16} width="60%" borderRadius={6} />
+            <SkeletonBox height={12} width="40%" borderRadius={6} style={{ marginTop: 6 }} />
+          </View>
+          <SkeletonBox width={64} height={34} borderRadius={10} />
+        </Animated.View>
+      ))}
+    </>
+  );
+}
+
+const skeletonStyles = StyleSheet.create({
+  card: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    backgroundColor: '#111',
+    borderRadius: 14,
+    padding: 16,
+    marginBottom: 10,
+    borderWidth: 1,
+    borderColor: '#1a1a1a',
+  },
+  lines: { flex: 1, gap: 6 },
+});
 
 export default function TonightScreen() {
   const profile = useUserStore((s) => s.profile);
@@ -109,7 +146,7 @@ export default function TonightScreen() {
         </View>
 
         {loading ? (
-          <ActivityIndicator color="#FF6B00" style={{ marginTop: 24 }} />
+          <VenueCardSkeleton />
         ) : hotVenues.length === 0 ? (
           <Text style={styles.empty}>No live activity yet — check back later tonight</Text>
         ) : (
