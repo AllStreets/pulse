@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/hooks/useAuth';
+import { useUserStore } from '@/stores/userStore';
 
 export default function LoginScreen() {
   const [email, setEmail] = useState('');
@@ -11,6 +12,7 @@ export default function LoginScreen() {
   const [loading, setLoading] = useState(false);
   const { signInWithEmail, signUpWithEmail } = useAuth();
   const router = useRouter();
+  const setBrowseMode = useUserStore((s) => s.setBrowseMode);
 
   async function handleSubmit() {
     setLoading(true);
@@ -73,6 +75,15 @@ export default function LoginScreen() {
           {isSignUp ? 'Already have an account? Log in' : "Don't have an account? Sign up"}
         </Text>
       </TouchableOpacity>
+      <TouchableOpacity
+        style={styles.browseBtn}
+        onPress={() => {
+          setBrowseMode(true);
+          router.replace('/(tabs)');
+        }}
+      >
+        <Text style={styles.browseText}>Explore the map first →</Text>
+      </TouchableOpacity>
     </View>
   );
 }
@@ -85,4 +96,6 @@ const styles = StyleSheet.create({
   button: { backgroundColor: '#3B82F6', padding: 16, borderRadius: 12, alignItems: 'center', marginTop: 8 },
   buttonText: { color: '#fff', fontSize: 16, fontWeight: '700' },
   toggle: { color: '#666', textAlign: 'center', marginTop: 20, fontSize: 14 },
+  browseBtn: { marginTop: 12, alignItems: 'center' },
+  browseText: { color: '#3B82F6', fontSize: 13, opacity: 0.7 },
 });

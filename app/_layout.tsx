@@ -5,18 +5,20 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuth } from '@/hooks/useAuth';
 import { registerForPushNotifications, useNotificationListener } from '@/hooks/useNotifications';
+import { useUserStore } from '@/stores/userStore';
 
 export default function RootLayout() {
   const { session, loading } = useAuth();
   const segments = useSegments();
   const router = useRouter();
   useNotificationListener();
+  const browseMode = useUserStore((s) => s.browseMode);
 
   useEffect(() => {
     if (loading) return;
     let stale = false;
     const inAuthGroup = segments[0] === '(auth)';
-    if (!session && !inAuthGroup) {
+    if (!session && !inAuthGroup && !browseMode) {
       router.replace('/(auth)/login');
     } else if (session && inAuthGroup) {
       AsyncStorage.getItem('onboarding_complete').then((done) => {
@@ -25,7 +27,7 @@ export default function RootLayout() {
       });
     }
     return () => { stale = true; };
-  }, [session, loading, segments, router]);
+  }, [session, loading, segments, router, browseMode]);
 
   useEffect(() => {
     if (session?.user?.id) {

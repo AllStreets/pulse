@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect } from 'react';
-import { useFocusEffect } from 'expo-router';
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet, RefreshControl } from 'react-native';
+import { useFocusEffect, useRouter } from 'expo-router';
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet, RefreshControl, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import Animated from 'react-native-reanimated';
 import { SkeletonBox } from '@/components/ui/SkeletonBox';
@@ -19,6 +19,7 @@ import { GameBanner } from '@/components/tonight/GameBanner';
 import { SceneSection } from '@/components/tonight/SceneSection';
 import { EventsList } from '@/components/tonight/EventsList';
 import { notifyIfCallsPoppingOff } from '@/hooks/useNotifications';
+import { GuestBanner } from '@/components/ui/GuestBanner';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { Venue } from '@/types';
 import type { NeighborhoodMeta } from '@/hooks/useNeighborhoods';
@@ -82,6 +83,8 @@ export default function TonightScreen() {
   const { events } = useEventsTonight();
   const { neighborhoods } = useNeighborhoods();
   const { venues } = useHeatmap();
+  const browseMode = useUserStore((s) => s.browseMode);
+  const router = useRouter();
   const [selectedVenue, setSelectedVenue] = useState<Venue | null>(null);
   const [selectedNeighborhood, setSelectedNeighborhood] = useState<NeighborhoodMeta | null>(null);
   const [refreshing, setRefreshing] = useState(false);
@@ -124,6 +127,13 @@ export default function TonightScreen() {
   }
 
   async function handleCall(venue: Venue) {
+    if (browseMode) {
+      Alert.alert('Sign up to call venues', 'Create a free account to make calls and track your predictions.', [
+        { text: 'Sign Up', onPress: () => router.replace('/(auth)/login') },
+        { text: 'Cancel', style: 'cancel' },
+      ]);
+      return;
+    }
     const seen = await AsyncStorage.getItem('first_call_seen');
     if (!seen) {
       setShowFirstCallSheet(true);
@@ -139,6 +149,7 @@ export default function TonightScreen() {
 
   return (
     <View style={styles.root}>
+      <GuestBanner />
       <Toast key={toastKey} message="Updated" visible={toastVisible} />
       <ScrollView
         style={styles.container}
