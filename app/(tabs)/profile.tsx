@@ -5,6 +5,7 @@ import { useUserStore } from '@/stores/userStore';
 import { usePredictions } from '@/hooks/usePredictions';
 import { supabase } from '@/lib/supabase';
 import * as Notifications from 'expo-notifications';
+import { useLeaderboard } from '@/hooks/useLeaderboard';
 
 const BADGE_COLORS: Record<string, string> = {
   casual: '#555',
@@ -19,6 +20,10 @@ export default function ProfileScreen() {
   const { predictions, callsRemaining } = usePredictions(profile?.id ?? null);
   const [pingCount, setPingCount] = useState<number | null>(null);
   const [notifEnabled, setNotifEnabled] = useState(false);
+  const { top10, userPercentile, lastNight } = useLeaderboard(
+    profile?.id ?? null,
+    profile?.heat_score ?? 0
+  );
 
   useEffect(() => {
     if (!profile?.id) return;
@@ -74,6 +79,14 @@ export default function ProfileScreen() {
         </View>
       </View>
 
+      {userPercentile !== null && (
+        <View style={styles.percentileRow}>
+          <Text style={styles.percentileText}>
+            You're in the top <Text style={styles.percentileHighlight}>{100 - userPercentile}%</Text> of callers
+          </Text>
+        </View>
+      )}
+
       {/* Tonight accuracy */}
       {accuracy !== null && (
         <View style={styles.section}>
@@ -88,6 +101,38 @@ export default function ProfileScreen() {
         <Text style={styles.sectionTitle}>Calls</Text>
         <Text style={styles.callsLeft}>{callsRemaining} calls remaining tonight</Text>
       </View>
+
+      {/* Last night's results */}
+      {lastNight && (
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Last Night</Text>
+          <View style={styles.nightSummary}>
+            <Text style={styles.nightScore}>
+              {lastNight.correct}/{lastNight.total} correct
+              {lastNight.pointsEarned > 0 ? ` · +${lastNight.pointsEarned} pts` : ''}
+            </Text>
+            {lastNight.venueNames.length > 0 && (
+              <Text style={styles.nightVenues}>Called: {lastNight.venueNames.join(', ')}</Text>
+            )}
+          </View>
+        </View>
+      )}
+
+      {/* Leaderboard */}
+      {top10.length > 0 && (
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Top Callers</Text>
+          {top10.map((entry, i) => (
+            <View key={entry.id} style={styles.leaderRow}>
+              <Text style={styles.leaderRank}>#{i + 1}</Text>
+              <Text style={[styles.leaderName, entry.id === profile.id && styles.leaderNameSelf]}>
+                @{entry.username}
+              </Text>
+              <Text style={styles.leaderScore}>{Math.round(entry.heat_score)}</Text>
+            </View>
+          ))}
+        </View>
+      )}
 
       {/* Notification toggle */}
       <View style={styles.row}>
@@ -126,11 +171,25 @@ const styles = StyleSheet.create({
   statLabel: { color: '#555', fontSize: 11, marginTop: 2 },
   statDivider: { width: 1, backgroundColor: '#1a1a1a' },
 
+  percentileRow: { backgroundColor: '#111', borderRadius: 12, padding: 12, alignItems: 'center', marginBottom: 24, borderWidth: 1, borderColor: '#1a1a1a' },
+  percentileText: { color: '#666', fontSize: 13 },
+  percentileHighlight: { color: '#3B82F6', fontWeight: '700' },
+
   section: { marginBottom: 24 },
   sectionTitle: { color: '#555', fontSize: 11, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 6 },
   accuracy: { color: '#fff', fontSize: 20, fontWeight: '700' },
   accuracySub: { color: '#555', fontSize: 13, marginTop: 2 },
   callsLeft: { color: '#fff', fontSize: 16, fontWeight: '600' },
+
+  nightSummary: { gap: 4 },
+  nightScore: { color: '#fff', fontSize: 18, fontWeight: '700' },
+  nightVenues: { color: '#555', fontSize: 13, marginTop: 2 },
+
+  leaderRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: '#151515' },
+  leaderRank: { color: '#444', fontSize: 13, fontWeight: '700', width: 28 },
+  leaderName: { flex: 1, color: '#ccc', fontSize: 14 },
+  leaderNameSelf: { color: '#3B82F6' },
+  leaderScore: { color: '#555', fontSize: 13 },
 
   row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 14, borderTopWidth: 1, borderTopColor: '#1a1a1a' },
   rowLabel: { color: '#aaa', fontSize: 15 },
