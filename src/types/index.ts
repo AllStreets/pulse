@@ -52,6 +52,7 @@ export interface Profile {
   local_rep: number;
   credibility_badge: CredentialBadge;
   streak: number;
+  push_token: string | null;
 }
 
 export interface Prediction {
