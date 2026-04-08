@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { useFocusEffect } from 'expo-router';
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet, RefreshControl } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -18,6 +18,7 @@ import { FirstCallSheet } from '@/components/tonight/FirstCallSheet';
 import { GameBanner } from '@/components/tonight/GameBanner';
 import { SceneSection } from '@/components/tonight/SceneSection';
 import { EventsList } from '@/components/tonight/EventsList';
+import { notifyIfCallsPoppingOff } from '@/hooks/useNotifications';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { Venue } from '@/types';
 import type { NeighborhoodMeta } from '@/hooks/useNeighborhoods';
@@ -96,6 +97,18 @@ export default function TonightScreen() {
       };
     }, [])
   );
+
+  useEffect(() => {
+    if (loading || !profile?.id || hotVenues.length === 0 || myPredictions.length === 0) return;
+    const pendingPreds = myPredictions.filter(p => p.outcome === 'pending');
+    if (!pendingPreds.length) return;
+    const venueList = hotVenues.map(h => ({
+      id: h.venue.id,
+      name: h.venue.name,
+      current_heat_score: h.venue.current_heat_score,
+    }));
+    notifyIfCallsPoppingOff(profile.id, pendingPreds, venueList);
+  }, [loading, profile?.id]);
 
   const neighborhoodVenues = selectedNeighborhood
     ? venues.filter(v => v.neighborhood_id === selectedNeighborhood.id)
