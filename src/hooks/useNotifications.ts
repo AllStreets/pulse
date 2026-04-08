@@ -42,6 +42,7 @@ export async function registerForPushNotifications(userId: string): Promise<void
 }
 
 export async function notifyIfCallsPoppingOff(
+  userId: string,
   predictions: Array<{ target_id: string; heat_at_call_time: number | null; outcome: string }>,
   venues: Array<{ id: string; name: string; current_heat_score: number }>
 ): Promise<void> {
