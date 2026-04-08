@@ -4,6 +4,7 @@ import BottomSheet, { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import { Ionicons } from '@expo/vector-icons';
 import { useVenue } from '@/hooks/useVenue';
 import { HeatChart } from './HeatChart';
+import { PingButton } from './PingButton';
 import { VibeTags } from './VibeTags';
 import { usePredictions } from '@/hooks/usePredictions';
 import { useUserStore } from '@/stores/userStore';
@@ -110,6 +111,12 @@ export function VenueSheet({ venue, onClose }: Props) {
                 <Text style={styles.callBtnText}>{canCall ? 'Call It' : 'No calls left tonight'}</Text>
               )}
             </TouchableOpacity>
+
+            {/* Ping */}
+            <PingButton
+              venueId={venue.id}
+              neighborhoodId={venue.neighborhood_id}
+            />
 
             {/* Heat chart */}
             <HeatChart points={tonightTimeline} label="Activity tonight" />
