@@ -33,14 +33,16 @@ export default function OnboardingScreen() {
 
   async function handleCta() {
     if (step < STEPS.length - 1) {
-      setStep(step + 1);
+      setStep(s => s + 1);
       return;
     }
 
     // Final step — request permissions
     try {
-      await Location.requestForegroundPermissionsAsync();
-      await Location.requestBackgroundPermissionsAsync();
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status === 'granted') {
+        await Location.requestBackgroundPermissionsAsync();
+      }
     } catch {}
 
     if (session?.user?.id) {

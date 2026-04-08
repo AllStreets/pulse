@@ -14,18 +14,17 @@ export default function RootLayout() {
 
   useEffect(() => {
     if (loading) return;
+    let stale = false;
     const inAuthGroup = segments[0] === '(auth)';
     if (!session && !inAuthGroup) {
       router.replace('/(auth)/login');
     } else if (session && inAuthGroup) {
       AsyncStorage.getItem('onboarding_complete').then((done) => {
-        if (done) {
-          router.replace('/(tabs)');
-        } else {
-          router.replace('/(auth)/onboarding');
-        }
+        if (stale) return;
+        router.replace(done ? '/(tabs)' : '/(auth)/onboarding');
       });
     }
+    return () => { stale = true; };
   }, [session, loading, segments, router]);
 
   useEffect(() => {
