@@ -29,6 +29,6 @@ export function openUntilString(hours: Record<string, string> | null): string | 
   const closeStr = range.split('-')[1];
   const [ch, cm] = closeStr.split(':').map(Number);
   const h = ch % 12 || 12;
-  const ampm = ch >= 12 ? 'AM' : 'PM';
+  const ampm = ch >= 12 ? 'PM' : 'AM';
   return `${h}${cm > 0 ? ':' + String(cm).padStart(2, '0') : ''} ${ampm}`;
 }
