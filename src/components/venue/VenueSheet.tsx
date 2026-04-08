@@ -7,6 +7,7 @@ import { HeatChart } from './HeatChart';
 import { VibeTags } from './VibeTags';
 import { usePredictions } from '@/hooks/usePredictions';
 import { useUserStore } from '@/stores/userStore';
+import { isOpenNow, openUntilString } from '@/lib/hours';
 import type { Venue } from '@/types';
 
 interface Props {
@@ -61,6 +62,20 @@ export function VenueSheet({ venue, onClose }: Props) {
                 </View>
               </View>
             </View>
+
+            {(() => {
+              const open = isOpenNow(venue.hours);
+              const until = openUntilString(venue.hours);
+              if (open === null) return null;
+              return (
+                <View style={styles.openRow}>
+                  <View style={[styles.openDot, { backgroundColor: open ? '#4CAF50' : '#f44336' }]} />
+                  <Text style={[styles.openText, { color: open ? '#4CAF50' : '#f44336' }]}>
+                    {open ? `Open · until ${until}` : 'Closed now'}
+                  </Text>
+                </View>
+              );
+            })()}
 
             {/* Stats row */}
             <View style={styles.statsRow}>
@@ -134,4 +149,8 @@ const styles = StyleSheet.create({
   callBtnDisabled: { backgroundColor: '#1a1a1a' },
   callBtnInner: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   callBtnText: { color: '#fff', fontWeight: '700', fontSize: 16 },
+
+  openRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: -8 },
+  openDot: { width: 7, height: 7, borderRadius: 4 },
+  openText: { fontSize: 12, fontWeight: '600' },
 });
