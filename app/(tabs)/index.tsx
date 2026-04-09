@@ -22,6 +22,7 @@ export default function MapScreen() {
   const [zoom, setZoom] = useState(10.5);
   const [showNeighborhoods, setShowNeighborhoods] = useState(true);
   const [showCTA, setShowCTA] = useState(false);
+  const [mapLoaded, setMapLoaded] = useState(false);
   const cameraRef = useRef<MapboxGL.Camera>(null);
 
   function adjustZoom(delta: number) {
@@ -41,19 +42,24 @@ export default function MapScreen() {
         rotateEnabled
         compassEnabled={false}
         scaleBarEnabled={false}
+        onDidFinishLoadingMap={() => setMapLoaded(true)}
       >
         <MapboxGL.Camera
           ref={cameraRef}
           defaultSettings={{ zoomLevel: 10.5, centerCoordinate: CHICAGO_CENTER }}
         />
-        <NeighborhoodLayer
-          neighborhoods={neighborhoods}
-          visible={showNeighborhoods}
-        />
-        <HeatmapLayer points={heatPoints} />
-        <CTARoutesLayer visible={showCTA} />
-        <CTALayer visible={showCTA} />
-        <VenueLayer venues={venues} onPress={setSelectedVenue} />
+        {mapLoaded && (
+          <>
+            <NeighborhoodLayer
+              neighborhoods={neighborhoods}
+              visible={showNeighborhoods}
+            />
+            <HeatmapLayer points={heatPoints} />
+            <CTARoutesLayer visible={showCTA} />
+            <CTALayer visible={showCTA} />
+            <VenueLayer venues={venues} onPress={setSelectedVenue} />
+          </>
+        )}
       </MapboxGL.MapView>
 
       {/* Layer toggles */}
