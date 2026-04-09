@@ -7,6 +7,8 @@ export interface HotVenue {
   pingCount: number;
   rank: number;
   callerCount: number;
+  neighborhoodName: string;
+  neighborhoodColor: string;
 }
 
 export interface PredictionWithVenue extends Prediction {
@@ -38,12 +40,12 @@ export function useTonightFeed(userId: string | null) {
   }
 
   async function fetchHotVenues() {
-    const thirtyMinutesAgo = new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString();
+    const twoHoursAgo = new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString();
 
     const { data: pings } = await supabase
       .from('location_pings')
       .select('venue_id')
-      .gte('pinged_at', thirtyMinutesAgo);
+      .gte('pinged_at', twoHoursAgo);
 
     if (!pings) return;
 
@@ -76,7 +78,8 @@ export function useTonightFeed(userId: string | null) {
       return;
     }
 
-    const hotVenueIds = sorted.map(item => item.venue.id);
+    // Fetch caller counts
+    const hotVenueIds = sorted.map((item) => item.venue.id);
     const today = new Date().toISOString().split('T')[0];
     const { data: predRows } = await supabase
       .from('predictions')
@@ -90,12 +93,28 @@ export function useTonightFeed(userId: string | null) {
       callerCounts.set(row.target_id, (callerCounts.get(row.target_id) ?? 0) + 1);
     }
 
-    const withCallers = sorted.map(item => ({
-      ...item,
-      callerCount: callerCounts.get(item.venue.id) ?? 0,
-    }));
+    // Fetch neighborhood names + colors for the venues
+    const neighborhoodIds = [...new Set(sorted.map((item) => item.venue.neighborhood_id).filter(Boolean))];
+    const { data: hoodData } = await supabase
+      .from('neighborhoods')
+      .select('id, name, map_color')
+      .in('id', neighborhoodIds);
 
-    setHotVenues(withCallers);
+    const hoodMap = new Map<string, { name: string; color: string }>(
+      (hoodData ?? []).map((h: any) => [h.id, { name: h.name, color: h.map_color ?? '#3B82F6' }])
+    );
+
+    const withMeta = sorted.map((item) => {
+      const hood = hoodMap.get(item.venue.neighborhood_id);
+      return {
+        ...item,
+        callerCount: callerCounts.get(item.venue.id) ?? 0,
+        neighborhoodName: hood?.name ?? '',
+        neighborhoodColor: hood?.color ?? '#3B82F6',
+      };
+    });
+
+    setHotVenues(withMeta);
   }
 
   async function fetchMyPredictions(uid: string) {
@@ -109,7 +128,9 @@ export function useTonightFeed(userId: string | null) {
 
     if (!preds?.length) return;
 
-    const venueIds = [...new Set(preds.filter((p: Prediction) => p.target_type === 'venue').map((p: Prediction) => p.target_id))];
+    const venueIds = [...new Set(
+      preds.filter((p: Prediction) => p.target_type === 'venue').map((p: Prediction) => p.target_id)
+    )];
     const { data: venues } = await supabase.from('venues').select('id, name').in('id', venueIds);
     const nameMap = new Map((venues ?? []).map((v: any) => [v.id, v.name]));
 

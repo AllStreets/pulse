@@ -196,7 +196,7 @@ export default function TonightScreen() {
         ) : (
           hotVenues.map((item) => {
             const called = hasCalledTarget(item.venue.id);
-            const color = heatColor(item.rank, hotVenues.length);
+            const color = item.neighborhoodColor;
             return (
               <TouchableOpacity
                 key={item.venue.id}
@@ -205,14 +205,17 @@ export default function TonightScreen() {
                 activeOpacity={0.75}
               >
                 <View style={styles.cardLeft}>
-                  <View style={[styles.rankBadge, { backgroundColor: color + '22', borderColor: color }]}>
+                  <View style={[styles.rankBadge, { backgroundColor: color + '22', borderColor: color + '80' }]}>
                     <Text style={[styles.rankText, { color }]}>#{item.rank}</Text>
                   </View>
                   <View style={styles.cardInfo}>
                     <Text style={styles.venueName}>{item.venue.name}</Text>
-                    <Text style={styles.venueMeta}>
-                      {item.venue.category}{item.venue.music_genre ? ` · ${item.venue.music_genre}` : ''}{item.venue.age_policy ? ` · ${item.venue.age_policy}` : ''}
-                    </Text>
+                    <View style={styles.hoodRow}>
+                      <View style={[styles.hoodDot, { backgroundColor: color }]} />
+                      <Text style={[styles.hoodLabel, { color }]}>{item.neighborhoodName}</Text>
+                      {item.venue.category ? <Text style={styles.hoodSep}>·</Text> : null}
+                      {item.venue.category ? <Text style={styles.venueMeta}>{item.venue.category}{item.venue.music_genre ? ` · ${item.venue.music_genre}` : ''}</Text> : null}
+                    </View>
                     <View style={styles.pingRow}>
                       <Ionicons name="radio-button-on" size={10} color={color} />
                       <Text style={[styles.pingCount, { color }]}>{item.pingCount} live signal{item.pingCount !== 1 ? 's' : ''}</Text>
@@ -336,7 +339,11 @@ const styles = StyleSheet.create({
   cardInfo: { flex: 1, gap: 3 },
   venueName: { color: '#e2e8f0', fontSize: 16, fontWeight: '700' },
   venueMeta: { color: '#4a5568', fontSize: 12 },
-  pingRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 2 },
+  hoodRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 2 },
+  hoodDot: { width: 5, height: 5, borderRadius: 3 },
+  hoodLabel: { fontSize: 11, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.4 },
+  hoodSep: { color: '#2d3748', fontSize: 11 },
+  pingRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 3 },
   pingCount: { fontSize: 12, fontWeight: '600' },
   pingDot: { color: '#2d3748', fontSize: 12 },
   callerCountText: { color: '#4a5568', fontSize: 12 },
