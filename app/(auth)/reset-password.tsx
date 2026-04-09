@@ -59,10 +59,10 @@ export default function ResetPasswordScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#0a0a0a', justifyContent: 'center', padding: 24 },
-  title: { color: '#fff', fontSize: 32, fontWeight: '800', marginBottom: 8 },
-  subtitle: { color: '#888', fontSize: 16, marginBottom: 40 },
-  input: { backgroundColor: '#1a1a1a', color: '#fff', padding: 16, borderRadius: 12, marginBottom: 12, fontSize: 16 },
+  container: { flex: 1, backgroundColor: '#060b18', justifyContent: 'center', padding: 24 },
+  title: { color: '#e2e8f0', fontSize: 32, fontWeight: '800', marginBottom: 8 },
+  subtitle: { color: '#4a5568', fontSize: 16, marginBottom: 40 },
+  input: { backgroundColor: '#0d1628', color: '#e2e8f0', padding: 16, borderRadius: 12, marginBottom: 12, fontSize: 16, borderWidth: 1, borderColor: '#1e3a5f' },
   button: { backgroundColor: '#3B82F6', padding: 16, borderRadius: 12, alignItems: 'center', marginTop: 8 },
   buttonText: { color: '#fff', fontSize: 16, fontWeight: '700' },
 });

@@ -101,21 +101,21 @@ export default function OnboardingScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#08080c',
+    backgroundColor: '#060b18',
     padding: 28,
     paddingTop: 60,
     paddingBottom: 52,
   },
   wordmark: {
-    color: '#3B82F6',
+    color: '#00d4ff',
     fontSize: 22,
     fontWeight: '900',
     letterSpacing: -0.5,
     marginBottom: 32,
   },
   dots: { flexDirection: 'row', gap: 8 },
-  dot: { width: 6, height: 6, borderRadius: 3, backgroundColor: '#2a2a2a' },
-  dotActive: { backgroundColor: '#3B82F6', width: 18 },
+  dot: { width: 6, height: 6, borderRadius: 3, backgroundColor: '#1e3a5f' },
+  dotActive: { backgroundColor: '#00d4ff', width: 18 },
   iconWrap: { flex: 0.8, justifyContent: 'center', alignItems: 'center' },
   iconCircle: {
     width: 96,
@@ -127,13 +127,13 @@ const styles = StyleSheet.create({
   },
   body: { flex: 1, justifyContent: 'flex-start', gap: 16, paddingTop: 8 },
   title: {
-    color: '#fff',
+    color: '#e2e8f0',
     fontSize: 32,
     fontWeight: '900',
     letterSpacing: -0.5,
     lineHeight: 38,
   },
-  bodyText: { color: '#666', fontSize: 16, lineHeight: 24 },
+  bodyText: { color: '#4a5568', fontSize: 16, lineHeight: 24 },
   button: {
     backgroundColor: '#3B82F6',
     padding: 18,
@@ -141,5 +141,5 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   buttonText: { color: '#fff', fontSize: 16, fontWeight: '700' },
-  skip: { color: '#444', textAlign: 'center', fontSize: 14, marginTop: 16 },
+  skip: { color: '#1e3a5f', textAlign: 'center', fontSize: 14, marginTop: 16 },
 });

@@ -145,29 +145,29 @@ export function VenueSheet({ venue, onClose }: Props) {
 }
 
 const styles = StyleSheet.create({
-  background: { backgroundColor: '#111' },
-  handle: { backgroundColor: '#2a2a2a', width: 36 },
+  background: { backgroundColor: '#0a1628' },
+  handle: { backgroundColor: '#1e3a5f', width: 36 },
   content: { paddingHorizontal: 20, paddingTop: 8, paddingBottom: 40, gap: 20 },
 
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
   headerLeft: { flex: 1, gap: 10 },
-  name: { color: '#fff', fontSize: 26, fontWeight: '800', letterSpacing: -0.5 },
+  name: { color: '#e2e8f0', fontSize: 26, fontWeight: '800', letterSpacing: -0.5 },
 
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
-  chip: { backgroundColor: '#1e1e1e', borderRadius: 20, paddingHorizontal: 10, paddingVertical: 4, borderWidth: 1, borderColor: '#2a2a2a' },
-  chipText: { color: '#aaa', fontSize: 12 },
-  chipAlt: { borderColor: '#3B82F6' + '40', backgroundColor: '#3B82F6' + '15' },
-  chipAltText: { color: '#3B82F6', fontSize: 12 },
+  chip: { backgroundColor: '#0d1e3a', borderRadius: 20, paddingHorizontal: 10, paddingVertical: 4, borderWidth: 1, borderColor: '#1e3a5f' },
+  chipText: { color: '#94a3b8', fontSize: 12 },
+  chipAlt: { borderColor: 'rgba(0,212,255,0.3)', backgroundColor: 'rgba(0,212,255,0.08)' },
+  chipAltText: { color: '#00d4ff', fontSize: 12 },
 
-  statsRow: { flexDirection: 'row', backgroundColor: '#161616', borderRadius: 14, borderWidth: 1, borderColor: '#1e1e1e', overflow: 'hidden' },
+  statsRow: { flexDirection: 'row', backgroundColor: '#0d1628', borderRadius: 14, borderWidth: 1, borderColor: '#1e3a5f', overflow: 'hidden' },
   statBox: { flex: 1, alignItems: 'center', paddingVertical: 16 },
-  statDivider: { width: 1, backgroundColor: '#1e1e1e' },
-  statValue: { color: '#fff', fontSize: 26, fontWeight: '800' },
-  statLabel: { color: '#555', fontSize: 11, marginTop: 2 },
+  statDivider: { width: 1, backgroundColor: '#1e3a5f' },
+  statValue: { color: '#00d4ff', fontSize: 26, fontWeight: '800' },
+  statLabel: { color: '#4a5568', fontSize: 11, marginTop: 2, letterSpacing: 0.5 },
 
   callBtn: { backgroundColor: '#3B82F6', borderRadius: 14, paddingVertical: 15, alignItems: 'center' },
-  callBtnCalled: { backgroundColor: '#161616', borderWidth: 1, borderColor: '#4CAF50' + '50' },
-  callBtnDisabled: { backgroundColor: '#1a1a1a' },
+  callBtnCalled: { backgroundColor: '#0d1628', borderWidth: 1, borderColor: 'rgba(16,185,129,0.4)' },
+  callBtnDisabled: { backgroundColor: '#0d1628', borderWidth: 1, borderColor: '#1e3a5f' },
   callBtnInner: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   callBtnText: { color: '#fff', fontWeight: '700', fontSize: 16 },
 

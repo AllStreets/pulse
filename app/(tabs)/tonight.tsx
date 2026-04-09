@@ -65,12 +65,12 @@ const skeletonStyles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
-    backgroundColor: '#111',
+    backgroundColor: '#0d1628',
     borderRadius: 14,
     padding: 16,
     marginBottom: 10,
     borderWidth: 1,
-    borderColor: '#1a1a1a',
+    borderColor: '#1e3a5f',
   },
   lines: { flex: 1, gap: 6 },
 });
@@ -200,7 +200,7 @@ export default function TonightScreen() {
             return (
               <TouchableOpacity
                 key={item.venue.id}
-                style={styles.venueCard}
+                style={[styles.venueCard, { borderLeftColor: color }]}
                 onPress={() => setSelectedVenue(item.venue)}
                 activeOpacity={0.75}
               >
@@ -303,54 +303,55 @@ export default function TonightScreen() {
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: '#0a0a0a' },
+  root: { flex: 1, backgroundColor: '#060b18' },
   container: { flex: 1 },
   content: { paddingTop: 60, paddingHorizontal: 20 },
 
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 24 },
   cityRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   city: { color: '#fff', fontSize: 28, fontWeight: '800', letterSpacing: -0.5 },
-  liveGamePill: { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: '#0d1f0d', borderRadius: 20, paddingHorizontal: 8, paddingVertical: 3, borderWidth: 1, borderColor: '#4CAF5040' },
-  liveGameText: { color: '#4CAF50', fontSize: 10, fontWeight: '600' },
-  time: { color: '#555', fontSize: 14, marginTop: 2 },
+  liveGamePill: { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: 'rgba(16,185,129,0.08)', borderRadius: 20, paddingHorizontal: 8, paddingVertical: 3, borderWidth: 1, borderColor: 'rgba(16,185,129,0.3)' },
+  liveGameText: { color: '#10b981', fontSize: 10, fontWeight: '700', letterSpacing: 0.3 },
+  time: { color: '#4a5568', fontSize: 14, marginTop: 2 },
 
-  callsPill: { backgroundColor: '#111', borderRadius: 20, paddingHorizontal: 16, paddingVertical: 10, alignItems: 'center', borderWidth: 1, borderColor: '#222' },
-  callsNumber: { color: '#3B82F6', fontSize: 22, fontWeight: '900' },
-  callsLabel: { color: '#555', fontSize: 10, marginTop: 1 },
+  callsPill: { backgroundColor: '#0d1628', borderRadius: 16, paddingHorizontal: 16, paddingVertical: 10, alignItems: 'center', borderWidth: 1, borderColor: '#1e3a5f' },
+  callsNumber: { color: '#00d4ff', fontSize: 22, fontWeight: '900' },
+  callsLabel: { color: '#4a5568', fontSize: 10, marginTop: 1, letterSpacing: 0.5 },
 
   sectionHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 14 },
-  sectionTitle: { color: '#fff', fontSize: 18, fontWeight: '700', letterSpacing: -0.2 },
-  emptyState: { alignItems: 'center', paddingVertical: 32, gap: 10 },
-  emptyTitle: { color: '#555', fontSize: 16, fontWeight: '700' },
-  emptyBody: { color: '#333', fontSize: 13, textAlign: 'center', lineHeight: 20, paddingHorizontal: 24 },
+  sectionTitle: { color: '#e2e8f0', fontSize: 18, fontWeight: '700', letterSpacing: -0.2 },
+  emptyState: { alignItems: 'center', paddingVertical: 40, gap: 10 },
+  emptyTitle: { color: '#4a5568', fontSize: 16, fontWeight: '700' },
+  emptyBody: { color: '#2d3748', fontSize: 13, textAlign: 'center', lineHeight: 20, paddingHorizontal: 24 },
 
   venueCard: {
-    backgroundColor: '#111', borderRadius: 14, padding: 16, marginBottom: 10,
+    backgroundColor: '#0d1628', borderRadius: 14, padding: 16, marginBottom: 10,
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    borderWidth: 1, borderColor: '#1a1a1a',
+    borderWidth: 1, borderColor: '#1e3a5f',
+    borderLeftWidth: 3,
   },
   cardLeft: { flexDirection: 'row', alignItems: 'center', flex: 1, gap: 12 },
   rankBadge: { width: 38, height: 38, borderRadius: 10, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
   rankText: { fontSize: 13, fontWeight: '800' },
   cardInfo: { flex: 1, gap: 3 },
-  venueName: { color: '#fff', fontSize: 16, fontWeight: '700' },
-  venueMeta: { color: '#555', fontSize: 12 },
+  venueName: { color: '#e2e8f0', fontSize: 16, fontWeight: '700' },
+  venueMeta: { color: '#4a5568', fontSize: 12 },
   pingRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 2 },
   pingCount: { fontSize: 12, fontWeight: '600' },
-  pingDot: { color: '#444', fontSize: 12 },
-  callerCountText: { color: '#666', fontSize: 12 },
+  pingDot: { color: '#2d3748', fontSize: 12 },
+  callerCountText: { color: '#4a5568', fontSize: 12 },
 
   cardRight: { marginLeft: 12 },
   callBtn: { backgroundColor: '#3B82F6', paddingVertical: 8, paddingHorizontal: 14, borderRadius: 10 },
-  callBtnDisabled: { backgroundColor: '#1a1a1a' },
+  callBtnDisabled: { backgroundColor: '#0d1628', borderWidth: 1, borderColor: '#1e3a5f' },
   callBtnText: { color: '#fff', fontWeight: '700', fontSize: 13 },
   calledBadge: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingVertical: 8, paddingHorizontal: 4 },
-  calledText: { color: '#4CAF50', fontWeight: '700', fontSize: 13 },
+  calledText: { color: '#10b981', fontWeight: '700', fontSize: 13 },
 
-  predictionRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: '#151515' },
+  predictionRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: '#0d1628' },
   predInfo: { flex: 1 },
-  predVenue: { color: '#ddd', fontSize: 15, fontWeight: '600' },
-  predPoints: { color: '#4CAF50', fontSize: 12, marginTop: 2 },
+  predVenue: { color: '#e2e8f0', fontSize: 15, fontWeight: '600' },
+  predPoints: { color: '#10b981', fontSize: 12, marginTop: 2 },
   predOutcomeRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   predOutcome: { fontSize: 13, fontWeight: '600' },
 });
