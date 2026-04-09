@@ -1,6 +1,7 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet, RefreshControl, Alert } from 'react-native';
+import type { ScrollView as ScrollViewType } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import Animated from 'react-native-reanimated';
 import { SkeletonBox } from '@/components/ui/SkeletonBox';
@@ -91,12 +92,14 @@ export default function TonightScreen() {
   const [toastVisible, setToastVisible] = useState(false);
   const [toastKey, setToastKey] = useState(0);
   const [showFirstCallSheet, setShowFirstCallSheet] = useState(false);
+  const scrollRef = useRef<ScrollViewType>(null);
 
   useFocusEffect(
     useCallback(() => {
       return () => {
         setSelectedNeighborhood(null);
         setSelectedVenue(null);
+        scrollRef.current?.scrollTo({ y: 0, animated: false });
       };
     }, [])
   );
@@ -152,6 +155,7 @@ export default function TonightScreen() {
       <GuestBanner />
       <Toast key={toastKey} message="Updated" visible={toastVisible} />
       <ScrollView
+        ref={scrollRef}
         style={styles.container}
         contentContainerStyle={[styles.content, browseMode && { paddingTop: 16 }]}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor="#666" />}

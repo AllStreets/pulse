@@ -37,12 +37,7 @@ export function HeatmapLayer({ points }: Props) {
             9, 30,
             13, 60,
           ],
-          // Reduce opacity when zoomed in so venue dots are visible
-          heatmapOpacity: [
-            'interpolate', ['linear'], ['zoom'],
-            10, 0.85,
-            13, 0.35,
-          ],
+          heatmapOpacity: 0.85,
         }}
       />
     </MapboxGL.ShapeSource>
