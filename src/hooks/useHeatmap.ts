@@ -5,10 +5,7 @@ import type { HeatmapPoint, Venue } from '@/types';
 function parseVenue(v: any): Venue {
   return {
     ...v,
-    coordinates: {
-      lat: v.coordinates.coordinates[1],
-      lng: v.coordinates.coordinates[0],
-    },
+    coordinates: { lat: v.lat, lng: v.lng },
   };
 }
 
@@ -17,7 +14,7 @@ export function useHeatmap() {
   const [heatPoints, setHeatPoints] = useState<HeatmapPoint[]>([]);
 
   async function fetchVenues() {
-    const { data } = await supabase.from('venues').select('*');
+    const { data } = await supabase.from('venues_geo').select('*');
     if (!data) return;
     setVenues(data.map(parseVenue));
   }
@@ -42,16 +39,16 @@ export function useHeatmap() {
     for (const v of counts.values()) if (v > maxCount) maxCount = v;
 
     const { data: venueData } = await supabase
-      .from('venues')
-      .select('id, coordinates');
+      .from('venues_geo')
+      .select('id, lat, lng');
 
     if (!venueData) return;
 
     const points: HeatmapPoint[] = venueData
       .filter((v: any) => counts.has(v.id))
       .map((v: any) => ({
-        lng: v.coordinates.coordinates[0],
-        lat: v.coordinates.coordinates[1],
+        lng: v.lng,
+        lat: v.lat,
         weight: (counts.get(v.id) ?? 0) / maxCount,
       }));
 

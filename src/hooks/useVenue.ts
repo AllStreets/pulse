@@ -25,14 +25,11 @@ export function useVenue(venueId: string | null) {
     }
 
     async function fetchVenue() {
-      const { data } = await supabase.from('venues').select('*').eq('id', venueId).single();
+      const { data } = await supabase.from('venues_geo').select('*').eq('id', venueId).single();
       if (data) {
         setVenue({
           ...data,
-          coordinates: {
-            lat: data.coordinates.coordinates[1],
-            lng: data.coordinates.coordinates[0],
-          },
+          coordinates: { lat: data.lat, lng: data.lng },
         });
       }
     }
