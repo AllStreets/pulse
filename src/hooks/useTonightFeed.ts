@@ -18,10 +18,7 @@ export interface PredictionWithVenue extends Prediction {
 function parseVenue(v: any): Venue {
   return {
     ...v,
-    coordinates: {
-      lat: v.coordinates.coordinates[1],
-      lng: v.coordinates.coordinates[0],
-    },
+    coordinates: { lat: v.lat, lng: v.lng },
   };
 }
 
@@ -61,7 +58,7 @@ export function useTonightFeed(userId: string | null) {
 
     const venueIds = Array.from(counts.keys());
     const { data: venueData } = await supabase
-      .from('venues')
+      .from('venues_geo')
       .select('*')
       .in('id', venueIds);
 
