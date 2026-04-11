@@ -39,9 +39,12 @@ export function NeighborhoodSheet({ neighborhood, venues, onClose, onVenueTap, n
   }, [onClose]);
 
   const color = neighborhood?.map_color ?? '#888';
-  const sorted = neighborhood
-    ? [...venues].sort((a, b) => b.current_heat_score - a.current_heat_score)
-    : [];
+  const sorted = useMemo(
+    () => neighborhood
+      ? [...venues].sort((a, b) => b.current_heat_score - a.current_heat_score)
+      : [],
+    [venues, neighborhood]
+  );
 
   return (
     <BottomSheet
@@ -117,29 +120,32 @@ export function NeighborhoodSheet({ neighborhood, venues, onClose, onVenueTap, n
                 {sorted.length === 0 ? (
                   <Text style={styles.emptyText}>No spots on record</Text>
                 ) : (
-                  sorted.map(v => (
-                    <TouchableOpacity
-                      key={v.id}
-                      style={styles.venueRow}
-                      onPress={() => onVenueTap?.(v)}
-                      activeOpacity={onVenueTap ? 0.7 : 1}
-                    >
-                      <View style={styles.venueInfo}>
-                        <Text style={styles.venueName}>{v.name}</Text>
-                        <Text style={styles.venueMeta}>
-                          {v.category}{v.music_genre ? ` · ${v.music_genre}` : ''}
-                        </Text>
-                      </View>
-                      <View style={styles.heatRight}>
-                        <Text style={[styles.heatScore, { color: heatColor(v.current_heat_score) }]}>
-                          {Math.round(v.current_heat_score)}
-                        </Text>
-                        <Text style={[styles.heatLabelSmall, { color: heatColor(v.current_heat_score) + 'AA' }]}>
-                          heat
-                        </Text>
-                      </View>
-                    </TouchableOpacity>
-                  ))
+                  sorted.map(v => {
+                    const vColor = heatColor(v.current_heat_score);
+                    return (
+                      <TouchableOpacity
+                        key={v.id}
+                        style={styles.venueRow}
+                        onPress={() => onVenueTap?.(v)}
+                        activeOpacity={onVenueTap ? 0.7 : 1}
+                      >
+                        <View style={styles.venueInfo}>
+                          <Text style={styles.venueName}>{v.name}</Text>
+                          <Text style={styles.venueMeta}>
+                            {v.category}{v.music_genre ? ` · ${v.music_genre}` : ''}
+                          </Text>
+                        </View>
+                        <View style={styles.heatRight}>
+                          <Text style={[styles.heatScore, { color: vColor }]}>
+                            {Math.round(v.current_heat_score)}
+                          </Text>
+                          <Text style={[styles.heatLabelSmall, { color: vColor + 'AA' }]}>
+                            heat
+                          </Text>
+                        </View>
+                      </TouchableOpacity>
+                    );
+                  })
                 )}
               </>
             )}
