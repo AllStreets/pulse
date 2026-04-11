@@ -2,19 +2,18 @@ import { View, Text, ScrollView, TouchableOpacity, StyleSheet } from 'react-nati
 import { heatColor } from '@/lib/heatColor';
 import type { Venue } from '@/types';
 import type { NeighborhoodMeta } from '@/hooks/useNeighborhoods';
+import type { HotVenue } from '@/hooks/useTonightFeed';
 
 interface Props {
-  venues: Venue[];
+  hotVenues: HotVenue[];
   neighborhoods: NeighborhoodMeta[];
   onVenueTap: (venue: Venue) => void;
   onNeighborhoodTap: (neighborhood: NeighborhoodMeta) => void;
 }
 
-export function LiveIntelPanel({ venues, neighborhoods, onVenueTap, onNeighborhoodTap }: Props) {
-  // Top 10 venues by current heat score
-  const topVenues = [...venues]
-    .sort((a, b) => b.current_heat_score - a.current_heat_score)
-    .slice(0, 10);
+export function LiveIntelPanel({ hotVenues, neighborhoods, onVenueTap, onNeighborhoodTap }: Props) {
+  // Already ranked by weightedScore — same order as Tonight's Hot Right Now
+  const topVenues = hotVenues.slice(0, 10);
 
   // Hottest neighborhood is first in the already-sorted neighborhoods array
   const hotNeighborhood = neighborhoods[0] ?? null;
@@ -43,17 +42,17 @@ export function LiveIntelPanel({ venues, neighborhoods, onVenueTap, onNeighborho
               <Text style={styles.cardName}>Top Scene</Text>
             </TouchableOpacity>
           )}
-          {topVenues.map(v => {
-            const color = heatColor(v.current_heat_score);
+          {topVenues.map(item => {
+            const color = heatColor(item.venue.current_heat_score);
             return (
               <TouchableOpacity
-                key={v.id}
+                key={item.venue.id}
                 style={[styles.card, { borderColor: color + '55' }]}
-                onPress={() => onVenueTap(v)}
+                onPress={() => onVenueTap(item.venue)}
                 activeOpacity={0.75}
               >
-                <Text style={[styles.cardScore, { color }]}>{Math.round(v.current_heat_score)}</Text>
-                <Text style={styles.cardName} numberOfLines={1}>{v.name}</Text>
+                <Text style={[styles.cardScore, { color }]}>{Math.round(item.venue.current_heat_score)}</Text>
+                <Text style={styles.cardName} numberOfLines={1}>{item.venue.name}</Text>
               </TouchableOpacity>
             );
           })}

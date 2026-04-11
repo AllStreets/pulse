@@ -14,6 +14,7 @@ import { VenueRippleOverlay } from '@/components/map/VenueRippleOverlay';
 import type { VenueScreenCoord } from '@/components/map/VenueRippleOverlay';
 import { useHeatmap } from '@/hooks/useHeatmap';
 import { useNeighborhoods } from '@/hooks/useNeighborhoods';
+import { useHotVenuesStore } from '@/stores/hotVenuesStore';
 import type { Venue } from '@/types';
 import type { NeighborhoodMeta } from '@/hooks/useNeighborhoods';
 
@@ -24,6 +25,12 @@ const CHICAGO_CENTER: [number, number] = [-87.6594, 41.9036];
 export default function MapScreen() {
   const { venues, heatPoints } = useHeatmap();
   const { neighborhoods } = useNeighborhoods();
+  const { hotVenues, fetchHotVenues } = useHotVenuesStore();
+
+  // Trigger initial fetch if store hasn't loaded yet
+  useEffect(() => {
+    if (hotVenues.length === 0) fetchHotVenues();
+  }, []);
   const insets = useSafeAreaInsets();
 
   const [selectedVenue, setSelectedVenue] = useState<Venue | null>(null);
@@ -136,7 +143,7 @@ export default function MapScreen() {
       {/* Live Intel Panel — above map, below safe area */}
       <View style={{ paddingTop: insets.top }}>
         <LiveIntelPanel
-          venues={venues}
+          hotVenues={hotVenues}
           neighborhoods={neighborhoods}
           onVenueTap={handleLiveIntelVenueTap}
           onNeighborhoodTap={handleLiveIntelNeighborhoodTap}
