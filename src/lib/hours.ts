@@ -71,7 +71,7 @@ function fmt24to12(t: string): string {
   const [h, m] = t.split(':').map(Number);
   const hour = h % 12 || 12;
   const ampm = h >= 12 ? 'PM' : 'AM';
-  return m > 0 ? `${hour}:${String(m).padStart(2, '0')}${ampm}` : `${hour}${ampm}`;
+  return m > 0 ? `${hour}:${String(m).padStart(2, '0')} ${ampm}` : `${hour} ${ampm}`;
 }
 
 export function todayHoursString(hours: Record<string, string> | null): string | null {

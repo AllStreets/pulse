@@ -26,14 +26,14 @@ describe('todayHoursString', () => {
   it('formats a normal range for Friday', () => {
     jest.useFakeTimers();
     jest.setSystemTime(new Date('2026-04-10T20:00:00')); // Friday
-    expect(todayHoursString(HOURS)).toBe('8PM – 4AM');
+    expect(todayHoursString(HOURS)).toBe('8 PM – 4 AM');
     jest.useRealTimers();
   });
 
   it('formats a Sunday early close', () => {
     jest.useFakeTimers();
     jest.setSystemTime(new Date('2026-04-12T20:00:00')); // Sunday
-    expect(todayHoursString(HOURS)).toBe('6PM – 12AM');
+    expect(todayHoursString(HOURS)).toBe('6 PM – 12 AM');
     jest.useRealTimers();
   });
 });
