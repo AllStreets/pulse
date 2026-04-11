@@ -1,5 +1,5 @@
 import { useRef, useCallback, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Linking } from 'react-native';
 import BottomSheet, { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
@@ -10,7 +10,8 @@ import { PingButton } from './PingButton';
 import { VibeTags } from './VibeTags';
 import { usePredictions } from '@/hooks/usePredictions';
 import { useUserStore } from '@/stores/userStore';
-import { isOpenNow, openUntilString } from '@/lib/hours';
+import { isOpenNow, openUntilString, todayHoursString } from '@/lib/hours';
+import { heatColor } from '@/lib/heatColor';
 import type { Venue } from '@/types';
 
 interface Props {
@@ -63,7 +64,7 @@ export function VenueSheet({ venue, onClose }: Props) {
       <BottomSheetScrollView contentContainerStyle={styles.content}>
         {venue && (
           <>
-            {/* Header */}
+            {/* Header: name + chips on left, heat badge on right */}
             <View style={styles.header}>
               <View style={styles.headerLeft}>
                 <Text style={styles.name}>{venue.name}</Text>
@@ -74,8 +75,16 @@ export function VenueSheet({ venue, onClose }: Props) {
                   {venue.cover && <View style={[styles.chip, styles.chipAlt]}><Text style={styles.chipAltText}>{venue.cover} cover</Text></View>}
                 </View>
               </View>
+              {/* Heat badge */}
+              <View style={[styles.heatBadge, { backgroundColor: heatColor(venue.current_heat_score) + '22', borderColor: heatColor(venue.current_heat_score) + '88' }]}>
+                <Text style={[styles.heatScore, { color: heatColor(venue.current_heat_score) }]}>
+                  {Math.round(venue.current_heat_score)}
+                </Text>
+                <Text style={[styles.heatLabel, { color: heatColor(venue.current_heat_score) + 'AA' }]}>HEAT</Text>
+              </View>
             </View>
 
+            {/* Open/closed row */}
             {(() => {
               const open = isOpenNow(venue.hours);
               const until = openUntilString(venue.hours);
@@ -101,6 +110,36 @@ export function VenueSheet({ venue, onClose }: Props) {
                 <Text style={styles.statValue}>{callsRemaining}</Text>
                 <Text style={styles.statLabel}>calls left</Text>
               </View>
+            </View>
+
+            {/* Info rows */}
+            <View style={styles.infoSection}>
+              {venue.address && (
+                <View style={styles.infoRow}>
+                  <Ionicons name="location-outline" size={15} color="#4a5568" style={styles.infoIcon} />
+                  <Text style={styles.infoText}>{venue.address}</Text>
+                </View>
+              )}
+              {(() => {
+                const hrs = todayHoursString(venue.hours);
+                if (!hrs) return null;
+                return (
+                  <View style={styles.infoRow}>
+                    <Ionicons name="time-outline" size={15} color="#4a5568" style={styles.infoIcon} />
+                    <Text style={styles.infoText}>{hrs}</Text>
+                  </View>
+                );
+              })()}
+              {venue.phone && (
+                <TouchableOpacity
+                  style={styles.infoRow}
+                  onPress={() => Linking.openURL(`tel:${venue.phone}`)}
+                  activeOpacity={0.7}
+                >
+                  <Ionicons name="call-outline" size={15} color="#4a5568" style={styles.infoIcon} />
+                  <Text style={[styles.infoText, styles.infoLink]}>{venue.phone}</Text>
+                </TouchableOpacity>
+              )}
             </View>
 
             {/* Call It button */}
@@ -150,7 +189,7 @@ const styles = StyleSheet.create({
   content: { paddingHorizontal: 20, paddingTop: 8, paddingBottom: 40, gap: 20 },
 
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
-  headerLeft: { flex: 1, gap: 10 },
+  headerLeft: { flex: 1, gap: 10, marginRight: 12 },
   name: { color: '#e2e8f0', fontSize: 26, fontWeight: '800', letterSpacing: -0.5 },
 
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
@@ -159,11 +198,28 @@ const styles = StyleSheet.create({
   chipAlt: { borderColor: 'rgba(0,212,255,0.3)', backgroundColor: 'rgba(0,212,255,0.08)' },
   chipAltText: { color: '#00d4ff', fontSize: 12 },
 
+  heatBadge: {
+    borderRadius: 12,
+    borderWidth: 1,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    alignItems: 'center',
+    minWidth: 56,
+  },
+  heatScore: { fontSize: 24, fontWeight: '900' },
+  heatLabel: { fontSize: 9, fontWeight: '700', letterSpacing: 0.5, marginTop: 1 },
+
   statsRow: { flexDirection: 'row', backgroundColor: '#0d1628', borderRadius: 14, borderWidth: 1, borderColor: '#1e3a5f', overflow: 'hidden' },
   statBox: { flex: 1, alignItems: 'center', paddingVertical: 16 },
   statDivider: { width: 1, backgroundColor: '#1e3a5f' },
   statValue: { color: '#00d4ff', fontSize: 26, fontWeight: '800' },
   statLabel: { color: '#4a5568', fontSize: 11, marginTop: 2, letterSpacing: 0.5 },
+
+  infoSection: { gap: 10 },
+  infoRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  infoIcon: { width: 18 },
+  infoText: { color: '#94a3b8', fontSize: 13, flex: 1 },
+  infoLink: { color: '#00d4ff' },
 
   callBtn: { backgroundColor: '#3B82F6', borderRadius: 14, paddingVertical: 15, alignItems: 'center' },
   callBtnCalled: { backgroundColor: '#0d1628', borderWidth: 1, borderColor: 'rgba(16,185,129,0.4)' },
