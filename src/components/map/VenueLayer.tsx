@@ -7,9 +7,16 @@ interface Props {
 }
 
 function venueColor(v: Venue): string {
-  if (v.category === 'club') return '#00E5D0';
-  if (v.music_genre === 'lounge' || v.music_genre === 'ambient') return '#FF2D78';
-  return '#C8A84B';
+  const c = (v.category ?? '').toLowerCase();
+  if (c.includes('nightclub') || c.includes('club')) return '#9333ea';
+  if (c.includes('cocktail')) return '#f59e0b';
+  if (c.includes('dive')) return '#ef4444';
+  if (c.includes('rooftop')) return '#14b8a6';
+  if (c.includes('lgbtq') || c.includes('gay')) return '#ec4899';
+  if (c.includes('craft beer') || c.includes('brewery')) return '#22c55e';
+  if (c.includes('sports') || c.includes('bar & grill') || c.includes('bar and grill')) return '#f97316';
+  if (c.includes('lounge')) return '#8b5cf6';
+  return '#3b82f6';
 }
 
 export function VenueLayer({ venues, onPress }: Props) {
