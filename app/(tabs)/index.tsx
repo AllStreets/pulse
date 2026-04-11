@@ -81,7 +81,7 @@ export default function MapScreen() {
         const coordPairs = await Promise.all(
           visible.map(async v => {
             const pt = await mapViewRef.current!.getPointInView([v.coordinates.lng, v.coordinates.lat]);
-            return { id: v.id, x: pt[0], y: pt[1], heatScore: v.current_heat_score };
+            return { id: v.id, x: pt[0], y: pt[1], heatScore: v.current_heat_score, category: v.category ?? '' };
           })
         );
         setVenueScreenCoords(coordPairs);

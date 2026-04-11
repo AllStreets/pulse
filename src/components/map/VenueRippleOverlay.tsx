@@ -1,12 +1,25 @@
 import { useEffect, useRef } from 'react';
 import { View, StyleSheet, Animated, Easing } from 'react-native';
-import { heatColor } from '@/lib/heatColor';
 
 export interface VenueScreenCoord {
   id: string;
   x: number;
   y: number;
   heatScore: number;
+  category: string;
+}
+
+function categoryColor(category: string): string {
+  const c = category.toLowerCase();
+  if (c.includes('nightclub') || c.includes('club')) return '#9333ea';
+  if (c.includes('cocktail')) return '#f59e0b';
+  if (c.includes('dive')) return '#ef4444';
+  if (c.includes('rooftop')) return '#14b8a6';
+  if (c.includes('lgbtq') || c.includes('gay')) return '#ec4899';
+  if (c.includes('craft beer') || c.includes('brewery')) return '#22c55e';
+  if (c.includes('sports') || c.includes('bar & grill') || c.includes('bar and grill')) return '#f97316';
+  if (c.includes('lounge')) return '#8b5cf6';
+  return '#3b82f6'; // generic bar
 }
 
 interface Props {
@@ -24,15 +37,16 @@ interface RippleDotProps {
   x: number;
   y: number;
   heatScore: number;
+  category: string;
 }
 
-function RippleDot({ x, y, heatScore }: RippleDotProps) {
+function RippleDot({ x, y, heatScore, category }: RippleDotProps) {
   const dotScale = useRef(new Animated.Value(1)).current;
   const ringScale = useRef(new Animated.Value(1)).current;
   const ringOpacity = useRef(new Animated.Value(0.8)).current;
   const glowOpacity = useRef(new Animated.Value(0)).current;
   const duration = pulseDuration(heatScore);
-  const color = heatColor(heatScore);
+  const color = categoryColor(category);
 
   useEffect(() => {
     // Reset to initial state when duration changes (heat tier crossed)
@@ -120,7 +134,7 @@ export function VenueRippleOverlay({ coords }: Props) {
   return (
     <View style={StyleSheet.absoluteFillObject} pointerEvents="none">
       {coords.map(c => (
-        <RippleDot key={c.id} x={c.x} y={c.y} heatScore={c.heatScore} />
+        <RippleDot key={c.id} x={c.x} y={c.y} heatScore={c.heatScore} category={c.category} />
       ))}
     </View>
   );
