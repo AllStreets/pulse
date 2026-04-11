@@ -5,7 +5,6 @@ import { useAuth } from '@/hooks/useAuth';
 import { useUserStore } from '@/stores/userStore';
 import { usePredictions } from '@/hooks/usePredictions';
 import { supabase } from '@/lib/supabase';
-import * as Notifications from 'expo-notifications';
 import { useLeaderboard } from '@/hooks/useLeaderboard';
 
 const BADGE_COLORS: Record<string, string> = {
@@ -22,7 +21,7 @@ export default function ProfileScreen() {
   const router = useRouter();
   const { predictions, callsRemaining } = usePredictions(profile?.id ?? null);
   const [pingCount, setPingCount] = useState<number | null>(null);
-  const [notifEnabled, setNotifEnabled] = useState(false);
+  const [notifEnabled, setNotifEnabled] = useState(true);
   const { top10, userPercentile, lastNight } = useLeaderboard(
     profile?.id ?? null,
     profile?.heat_score ?? 0
@@ -36,9 +35,14 @@ export default function ProfileScreen() {
       .eq('user_id', profile.id)
       .then(({ count }) => setPingCount(count ?? 0));
 
-    Notifications.getPermissionsAsync().then(({ status }) => {
-      setNotifEnabled(status === 'granted');
-    });
+    supabase
+      .from('profiles')
+      .select('notifications_enabled')
+      .eq('id', profile.id)
+      .single()
+      .then(({ data }) => {
+        if (data) setNotifEnabled(data.notifications_enabled);
+      });
   }, [profile?.id]);
 
   if (!profile && (authLoading || session)) {
@@ -64,6 +68,16 @@ export default function ProfileScreen() {
         )}
       </View>
     );
+  }
+
+  async function handleToggleNotifications(value: boolean) {
+    if (!profile?.id) return;
+    setNotifEnabled(value); // optimistic update
+    const { error } = await supabase
+      .from('profiles')
+      .update({ notifications_enabled: value })
+      .eq('id', profile.id);
+    if (error) setNotifEnabled(!value); // revert on failure
   }
 
   const scored = predictions.filter((p) => p.outcome !== 'pending' && p.outcome !== 'voided');
@@ -165,8 +179,7 @@ export default function ProfileScreen() {
         <Text style={styles.rowLabel}>Hot venue alerts</Text>
         <Switch
           value={notifEnabled}
-          onValueChange={() => {}}
-          disabled
+          onValueChange={handleToggleNotifications}
           trackColor={{ true: '#3B82F6' }}
           thumbColor="#fff"
         />
