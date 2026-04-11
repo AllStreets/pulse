@@ -89,14 +89,15 @@ export default function MapScreen() {
     if (mapLoaded && venues.length > 0) handleCameraChanged();
   }, [venues, mapLoaded]);
 
-  // Zoom + open sheet when tapping a Live Intel venue card
+  // Zoom + open sheet when tapping a Live Intel venue card.
+  // Wait for camera animation to finish before opening sheet for a smooth sequence.
   function handleLiveIntelVenueTap(venue: Venue) {
     cameraRef.current?.setCamera({
       centerCoordinate: [venue.coordinates.lng, venue.coordinates.lat],
       zoomLevel: 15,
-      animationDuration: 400,
+      animationDuration: 600,
     });
-    setSelectedVenue(venue);
+    setTimeout(() => setSelectedVenue(venue), 620);
   }
 
   // Zoom + open sheet when tapping a Live Intel neighborhood card
@@ -108,10 +109,18 @@ export default function MapScreen() {
       cameraRef.current?.setCamera({
         centerCoordinate: [lng, lat],
         zoomLevel: 13,
-        animationDuration: 400,
+        animationDuration: 600,
       });
     }
-    setSelectedNeighborhood(neighborhood);
+    setTimeout(() => setSelectedNeighborhood(neighborhood), 620);
+  }
+
+  function resetMap() {
+    cameraRef.current?.setCamera({
+      centerCoordinate: CHICAGO_CENTER,
+      zoomLevel: 10.5,
+      animationDuration: 500,
+    });
   }
 
   const neighborhoodVenues = selectedNeighborhood
@@ -188,6 +197,9 @@ export default function MapScreen() {
             <Text style={[styles.toggleText, showCTA && styles.toggleTextActive]}>
               CTA
             </Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.toggleBtn} onPress={resetMap}>
+            <Text style={styles.toggleText}>Reset</Text>
           </TouchableOpacity>
         </View>
 
