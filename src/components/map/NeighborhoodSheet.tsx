@@ -7,7 +7,7 @@ import { HeatChart } from '@/components/venue/HeatChart';
 import type { NeighborhoodMeta } from '@/hooks/useNeighborhoods';
 import type { Venue } from '@/types';
 
-type Tab = 'scene' | 'venues' | 'activity';
+type Tab = 'scene' | 'venues';
 
 interface Props {
   neighborhood: NeighborhoodMeta | null;
@@ -75,7 +75,7 @@ export function NeighborhoodSheet({ neighborhood, venues, onClose, onVenueTap, n
 
             {/* Tab bar */}
             <View style={styles.tabBar}>
-              {(['scene', 'venues', 'activity'] as Tab[]).map(tab => (
+              {(['scene', 'venues'] as Tab[]).map(tab => (
                 <TouchableOpacity
                   key={tab}
                   style={[styles.tab, activeTab === tab && { borderBottomColor: color }]}
@@ -111,6 +111,19 @@ export function NeighborhoodSheet({ neighborhood, venues, onClose, onVenueTap, n
                       </View>
                     ))}
                   </View>
+                )}
+                {/* Activity info inline */}
+                <HeatChart points={timeline} label="Pings tonight" />
+                <View style={styles.activityStats}>
+                  <View style={styles.activityStat}>
+                    <Text style={styles.activityStatValue}>{pingCount}</Text>
+                    <Text style={styles.activityStatLabel}>total pings tonight</Text>
+                  </View>
+                </View>
+                {updatedAt && (
+                  <Text style={styles.updatedAt}>
+                    Updated {updatedAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                  </Text>
                 )}
               </>
             )}
@@ -150,22 +163,6 @@ export function NeighborhoodSheet({ neighborhood, venues, onClose, onVenueTap, n
               </>
             )}
 
-            {activeTab === 'activity' && (
-              <>
-                <HeatChart points={timeline} label="Pings tonight" />
-                <View style={styles.activityStats}>
-                  <View style={styles.activityStat}>
-                    <Text style={styles.activityStatValue}>{pingCount}</Text>
-                    <Text style={styles.activityStatLabel}>total pings tonight</Text>
-                  </View>
-                </View>
-                {updatedAt && (
-                  <Text style={styles.updatedAt}>
-                    Updated {updatedAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                  </Text>
-                )}
-              </>
-            )}
           </BottomSheetScrollView>
         </>
       )}
