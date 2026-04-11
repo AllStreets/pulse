@@ -47,11 +47,10 @@ export function VenueLayer({ venues, onPress }: Props) {
       <MapboxGL.CircleLayer
         id="venues-circles"
         style={{
-          circleRadius: 8,
+          circleRadius: 14,
           circleColor: ['get', 'color'],
-          circleStrokeWidth: 2,
-          circleStrokeColor: '#ffffff',
-          circleOpacity: 0.92,
+          circleOpacity: 0,
+          circleStrokeWidth: 0,
         }}
       />
     </MapboxGL.ShapeSource>
