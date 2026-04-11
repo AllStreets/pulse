@@ -203,7 +203,7 @@ export default function TonightScreen() {
             <Text style={styles.emptyBody}>No signals yet tonight. Check back after 9PM or pull to refresh.</Text>
           </View>
         ) : (
-          hotVenues.map((item) => {
+          hotVenues.slice(0, 10).map((item) => {
             const called = hasCalledTarget(item.venue.id);
             const color = item.neighborhoodColor;
             return (

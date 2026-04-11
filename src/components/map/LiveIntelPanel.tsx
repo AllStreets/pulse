@@ -11,10 +11,10 @@ interface Props {
 }
 
 export function LiveIntelPanel({ venues, neighborhoods, onVenueTap, onNeighborhoodTap }: Props) {
-  // Top 5 venues by current heat score
+  // Top 10 venues by current heat score
   const topVenues = [...venues]
     .sort((a, b) => b.current_heat_score - a.current_heat_score)
-    .slice(0, 5);
+    .slice(0, 10);
 
   // Hottest neighborhood is first in the already-sorted neighborhoods array
   const hotNeighborhood = neighborhoods[0] ?? null;
@@ -30,6 +30,19 @@ export function LiveIntelPanel({ venues, neighborhoods, onVenueTap, onNeighborho
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.scroll}
         >
+          {/* Top Scene card — always first */}
+          {hotNeighborhood && (
+            <TouchableOpacity
+              style={[styles.card, { borderColor: hotNeighborhood.map_color + '55' }]}
+              onPress={() => onNeighborhoodTap(hotNeighborhood)}
+              activeOpacity={0.75}
+            >
+              <Text style={[styles.cardScore, { color: hotNeighborhood.map_color, fontSize: 13 }]} numberOfLines={1}>
+                {hotNeighborhood.name}
+              </Text>
+              <Text style={styles.cardName}>Top Scene</Text>
+            </TouchableOpacity>
+          )}
           {topVenues.map(v => {
             const color = heatColor(v.current_heat_score);
             return (
@@ -44,18 +57,6 @@ export function LiveIntelPanel({ venues, neighborhoods, onVenueTap, onNeighborho
               </TouchableOpacity>
             );
           })}
-          {hotNeighborhood && (
-            <TouchableOpacity
-              style={[styles.card, { borderColor: hotNeighborhood.map_color + '55' }]}
-              onPress={() => onNeighborhoodTap(hotNeighborhood)}
-              activeOpacity={0.75}
-            >
-              <Text style={[styles.cardScore, { color: hotNeighborhood.map_color, fontSize: 13 }]} numberOfLines={1}>
-                {hotNeighborhood.name}
-              </Text>
-              <Text style={styles.cardName}>Top Scene</Text>
-            </TouchableOpacity>
-          )}
         </ScrollView>
       </View>
     </View>
