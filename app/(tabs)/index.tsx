@@ -41,6 +41,7 @@ export default function MapScreen() {
   const [mapLoaded, setMapLoaded] = useState(false);
   const [venueScreenCoords, setVenueScreenCoords] = useState<VenueScreenCoord[]>([]);
   const [mapMoving, setMapMoving] = useState(false);
+  const [panelHeight, setPanelHeight] = useState(0);
 
   const cameraRef = useRef<MapboxGL.Camera>(null);
   const mapViewRef = useRef<MapboxGL.MapView>(null);
@@ -140,8 +141,47 @@ export default function MapScreen() {
 
   return (
     <View style={styles.container}>
-      {/* Live Intel Panel — above map, below safe area */}
-      <View style={{ paddingTop: insets.top }}>
+      {/* Map fills entire screen */}
+      <MapboxGL.MapView
+        ref={mapViewRef}
+        style={StyleSheet.absoluteFillObject}
+        styleURL="mapbox://styles/mapbox/dark-v11"
+        zoomEnabled
+        scrollEnabled
+        pitchEnabled
+        rotateEnabled
+        compassEnabled={false}
+        scaleBarEnabled={false}
+        onDidFinishLoadingMap={() => setMapLoaded(true)}
+        onCameraChanged={handleCameraChanged}
+      >
+        <MapboxGL.Camera
+          ref={cameraRef}
+          defaultSettings={{ zoomLevel: 10.5, centerCoordinate: CHICAGO_CENTER }}
+        />
+        {mapLoaded && (
+          <>
+            <NeighborhoodLayer
+              neighborhoods={neighborhoods}
+              visible={showNeighborhoods}
+              onPress={setSelectedNeighborhood}
+            />
+            <HeatmapLayer points={heatPoints} />
+            <CTARoutesLayer visible={showCTA} />
+            <CTALayer visible={showCTA} />
+            <VenueLayer venues={venues} onPress={setSelectedVenue} />
+          </>
+        )}
+      </MapboxGL.MapView>
+
+      {/* Ripple overlay — hidden while map is moving to avoid stale positions */}
+      {!mapMoving && <VenueRippleOverlay coords={venueScreenCoords} />}
+
+      {/* Live Intel Panel — floats over map below safe area */}
+      <View
+        style={[styles.panelOverlay, { top: insets.top }]}
+        onLayout={e => setPanelHeight(e.nativeEvent.layout.height)}
+      >
         <LiveIntelPanel
           hotVenues={hotVenues}
           neighborhoods={neighborhoods}
@@ -150,75 +190,37 @@ export default function MapScreen() {
         />
       </View>
 
-      {/* Map fills remaining space */}
-      <View style={styles.mapContainer}>
-        <MapboxGL.MapView
-          ref={mapViewRef}
-          style={StyleSheet.absoluteFillObject}
-          styleURL="mapbox://styles/mapbox/dark-v11"
-          zoomEnabled
-          scrollEnabled
-          pitchEnabled
-          rotateEnabled
-          compassEnabled={false}
-          scaleBarEnabled={false}
-          onDidFinishLoadingMap={() => setMapLoaded(true)}
-          onCameraChanged={handleCameraChanged}
+      {/* Layer toggles — positioned below the panel */}
+      <View style={[styles.layerToggles, { top: insets.top + panelHeight + 8 }]}>
+        <TouchableOpacity
+          style={[styles.toggleBtn, showNeighborhoods && styles.toggleBtnActive]}
+          onPress={() => setShowNeighborhoods(v => !v)}
         >
-          <MapboxGL.Camera
-            ref={cameraRef}
-            defaultSettings={{ zoomLevel: 10.5, centerCoordinate: CHICAGO_CENTER }}
-          />
-          {mapLoaded && (
-            <>
-              <NeighborhoodLayer
-                neighborhoods={neighborhoods}
-                visible={showNeighborhoods}
-                onPress={setSelectedNeighborhood}
-              />
-              <HeatmapLayer points={heatPoints} />
-              <CTARoutesLayer visible={showCTA} />
-              <CTALayer visible={showCTA} />
-              <VenueLayer venues={venues} onPress={setSelectedVenue} />
-            </>
-          )}
-        </MapboxGL.MapView>
+          <Text style={[styles.toggleText, showNeighborhoods && styles.toggleTextActive]}>
+            Scenes
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.toggleBtn, showCTA && styles.toggleBtnActive]}
+          onPress={() => setShowCTA(v => !v)}
+        >
+          <Text style={[styles.toggleText, showCTA && styles.toggleTextActive]}>
+            CTA
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.toggleBtn} onPress={resetMap}>
+          <Text style={styles.toggleText}>Reset</Text>
+        </TouchableOpacity>
+      </View>
 
-        {/* Ripple overlay — hidden while map is moving to avoid stale positions */}
-        {!mapMoving && <VenueRippleOverlay coords={venueScreenCoords} />}
-
-        {/* Layer toggles */}
-        <View style={styles.layerToggles}>
-          <TouchableOpacity
-            style={[styles.toggleBtn, showNeighborhoods && styles.toggleBtnActive]}
-            onPress={() => setShowNeighborhoods(v => !v)}
-          >
-            <Text style={[styles.toggleText, showNeighborhoods && styles.toggleTextActive]}>
-              Scenes
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.toggleBtn, showCTA && styles.toggleBtnActive]}
-            onPress={() => setShowCTA(v => !v)}
-          >
-            <Text style={[styles.toggleText, showCTA && styles.toggleTextActive]}>
-              CTA
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.toggleBtn} onPress={resetMap}>
-            <Text style={styles.toggleText}>Reset</Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* Zoom controls */}
-        <View style={styles.zoomControls}>
-          <TouchableOpacity style={styles.zoomBtn} onPress={() => adjustZoom(1)}>
-            <Text style={styles.zoomText}>+</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.zoomBtn} onPress={() => adjustZoom(-1)}>
-            <Text style={styles.zoomText}>-</Text>
-          </TouchableOpacity>
-        </View>
+      {/* Zoom controls */}
+      <View style={styles.zoomControls}>
+        <TouchableOpacity style={styles.zoomBtn} onPress={() => adjustZoom(1)}>
+          <Text style={styles.zoomText}>+</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.zoomBtn} onPress={() => adjustZoom(-1)}>
+          <Text style={styles.zoomText}>-</Text>
+        </TouchableOpacity>
       </View>
 
       <VenueSheet venue={selectedVenue} onClose={() => setSelectedVenue(null)} />
@@ -238,12 +240,16 @@ export default function MapScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#0a0a0a' },
-  mapContainer: { flex: 1 },
+  container: { flex: 1 },
+
+  panelOverlay: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+  },
 
   layerToggles: {
     position: 'absolute',
-    top: 12,
     right: 12,
     gap: 6,
   },
