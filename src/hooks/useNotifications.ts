@@ -50,6 +50,14 @@ export async function notifyIfCallsPoppingOff(
   predictions: Array<{ target_id: string; heat_at_call_time: number | null; outcome: string }>,
   venues: Array<{ id: string; name: string; current_heat_score: number }>
 ): Promise<void> {
+  // Check user's notification preference before sending anything
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('notifications_enabled')
+    .eq('id', userId)
+    .single();
+  if (!profile?.notifications_enabled) return;
+
   for (const p of predictions) {
     if (p.outcome !== 'pending') continue;
     if ((p.heat_at_call_time ?? 100) >= 40) continue;
