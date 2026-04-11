@@ -30,15 +30,26 @@ function RippleDot({ x, y, heatScore }: RippleDotProps) {
   const dotScale = useRef(new Animated.Value(1)).current;
   const ringScale = useRef(new Animated.Value(1)).current;
   const ringOpacity = useRef(new Animated.Value(0.8)).current;
+  const glowOpacity = useRef(new Animated.Value(0)).current;
   const duration = pulseDuration(heatScore);
   const color = heatColor(heatScore);
 
   useEffect(() => {
-    // Inner dot pulse loop
+    // Reset to initial state when duration changes (heat tier crossed)
+    dotScale.setValue(1);
+    glowOpacity.setValue(0);
+
+    // Inner dot pulse + glow expand in sync (both native driver)
     const dotLoop = Animated.loop(
       Animated.sequence([
-        Animated.timing(dotScale, { toValue: 1.15, duration: duration / 2, easing: Easing.inOut(Easing.ease), useNativeDriver: true }),
-        Animated.timing(dotScale, { toValue: 1, duration: duration / 2, easing: Easing.inOut(Easing.ease), useNativeDriver: true }),
+        Animated.parallel([
+          Animated.timing(dotScale, { toValue: 1.15, duration: duration / 2, easing: Easing.inOut(Easing.ease), useNativeDriver: true }),
+          Animated.timing(glowOpacity, { toValue: 0.4, duration: duration / 2, easing: Easing.inOut(Easing.ease), useNativeDriver: true }),
+        ]),
+        Animated.parallel([
+          Animated.timing(dotScale, { toValue: 1, duration: duration / 2, easing: Easing.inOut(Easing.ease), useNativeDriver: true }),
+          Animated.timing(glowOpacity, { toValue: 0, duration: duration / 2, easing: Easing.inOut(Easing.ease), useNativeDriver: true }),
+        ]),
       ])
     );
 
@@ -78,6 +89,16 @@ function RippleDot({ x, y, heatScore }: RippleDotProps) {
           },
         ]}
       />
+      {/* Glow layer — expands with dot at 50% keyframe */}
+      <Animated.View
+        style={[
+          styles.glow,
+          {
+            backgroundColor: color,
+            opacity: glowOpacity,
+          },
+        ]}
+      />
       {/* Inner dot */}
       <Animated.View
         style={[
@@ -112,6 +133,13 @@ const styles = StyleSheet.create({
     height: 28,
     alignItems: 'center',
     justifyContent: 'center',
+    overflow: 'visible',
+  },
+  glow: {
+    position: 'absolute',
+    width: 20,
+    height: 20,
+    borderRadius: 10,
   },
   dot: {
     width: 10,
