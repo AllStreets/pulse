@@ -66,3 +66,21 @@ export function openUntilString(hours: Record<string, string> | null): string | 
   const ampm = ch >= 12 ? 'PM' : 'AM';
   return `${h}${cm > 0 ? ':' + String(cm).padStart(2, '0') : ''} ${ampm}`;
 }
+
+function fmt24to12(t: string): string {
+  const [h, m] = t.split(':').map(Number);
+  const hour = h % 12 || 12;
+  const ampm = h >= 12 ? 'PM' : 'AM';
+  return m > 0 ? `${hour}:${String(m).padStart(2, '0')}${ampm}` : `${hour}${ampm}`;
+}
+
+export function todayHoursString(hours: Record<string, string> | null): string | null {
+  if (!hours) return null;
+  const now = new Date();
+  const todayKey = DAY_KEYS[now.getDay()];
+  const range = hours[todayKey];
+  if (!range || range === 'closed') return 'Closed tonight';
+  const parts = range.split('-');
+  if (parts.length !== 2) return null;
+  return `${fmt24to12(parts[0])} – ${fmt24to12(parts[1])}`;
+}
