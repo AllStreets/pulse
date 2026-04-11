@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState } from 'react';
 import MapboxGL from '@rnmapbox/maps';
 import type { HeatmapPoint } from '@/types';
 
@@ -5,7 +6,31 @@ interface Props {
   points: HeatmapPoint[];
 }
 
+const DURATION_MS = 2500;
+
 export function HeatmapLayer({ points }: Props) {
+  const [opacity, setOpacity] = useState(0.85);
+  const rafRef = useRef<number | null>(null);
+  const startRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    function tick(ts: number) {
+      if (startRef.current === null) startRef.current = ts;
+      const elapsed = (ts - startRef.current) % (DURATION_MS * 2);
+      // t goes 0→1→0 over one full cycle
+      const t = elapsed < DURATION_MS ? elapsed / DURATION_MS : 1 - (elapsed - DURATION_MS) / DURATION_MS;
+      // ease-in-out cubic
+      const eased = t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+      setOpacity(0.5 + eased * 0.45); // 0.5 → 0.95
+      rafRef.current = requestAnimationFrame(tick);
+    }
+
+    rafRef.current = requestAnimationFrame(tick);
+    return () => {
+      if (rafRef.current !== null) cancelAnimationFrame(rafRef.current);
+    };
+  }, []);
+
   const geojson: GeoJSON.FeatureCollection = {
     type: 'FeatureCollection',
     features: points.map((p) => ({
@@ -37,7 +62,7 @@ export function HeatmapLayer({ points }: Props) {
             9, 30,
             13, 60,
           ],
-          heatmapOpacity: 0.85,
+          heatmapOpacity: opacity,
         }}
       />
     </MapboxGL.ShapeSource>
