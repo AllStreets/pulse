@@ -34,6 +34,7 @@ export interface Venue {
   current_heat_score: number;
   phone: string | null;
   hours: Record<string, string> | null;
+  address: string | null;
 }
 
 export interface VenueHeatHistory {
