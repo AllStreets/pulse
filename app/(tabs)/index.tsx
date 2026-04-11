@@ -33,10 +33,12 @@ export default function MapScreen() {
   const [showCTA, setShowCTA] = useState(false);
   const [mapLoaded, setMapLoaded] = useState(false);
   const [venueScreenCoords, setVenueScreenCoords] = useState<VenueScreenCoord[]>([]);
+  const [mapMoving, setMapMoving] = useState(false);
 
   const cameraRef = useRef<MapboxGL.Camera>(null);
   const mapViewRef = useRef<MapboxGL.MapView>(null);
   const coordDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const movingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   function adjustZoom(delta: number) {
     const next = Math.min(20, Math.max(5, zoom + delta));
@@ -44,14 +46,22 @@ export default function MapScreen() {
     cameraRef.current?.setCamera({ zoomLevel: next, animationDuration: 200 });
   }
 
-  // Compute screen coords for visible venues on every camera change
+  // Compute screen coords for visible venues on every camera change.
+  // Hide overlay while moving; recompute and show once camera settles.
   const handleCameraChanged = useCallback(async () => {
     if (!mapViewRef.current || venues.length === 0) return;
+
+    // Mark map as moving immediately — hides the overlay
+    setMapMoving(true);
+
+    // Clear any pending settle timeout
+    if (movingTimeoutRef.current) clearTimeout(movingTimeoutRef.current);
     if (coordDebounceRef.current) clearTimeout(coordDebounceRef.current);
-    coordDebounceRef.current = setTimeout(async () => {
+
+    // After 200ms of no camera events, recompute coords and show overlay
+    movingTimeoutRef.current = setTimeout(async () => {
       try {
         const bounds = await mapViewRef.current!.getVisibleBounds();
-        // bounds = [[maxLng, maxLat], [minLng, minLat]]
         const [maxLng, maxLat] = bounds[0];
         const [minLng, minLat] = bounds[1];
 
@@ -67,10 +77,11 @@ export default function MapScreen() {
           })
         );
         setVenueScreenCoords(coordPairs);
+        setMapMoving(false);
       } catch {
-        // Map not ready or unmounted — ignore
+        setMapMoving(false);
       }
-    }, 150);
+    }, 200);
   }, [venues]);
 
   // Recompute when venues load
@@ -157,8 +168,8 @@ export default function MapScreen() {
           )}
         </MapboxGL.MapView>
 
-        {/* Ripple overlay — absolute over map */}
-        <VenueRippleOverlay coords={venueScreenCoords} />
+        {/* Ripple overlay — hidden while map is moving to avoid stale positions */}
+        {!mapMoving && <VenueRippleOverlay coords={venueScreenCoords} />}
 
         {/* Layer toggles */}
         <View style={styles.layerToggles}>
