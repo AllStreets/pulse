@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { AppState, AppStateStatus } from 'react-native';
 
 export interface ChicagoGame {
   id: string;
@@ -13,12 +14,10 @@ export interface ChicagoGame {
   awayScore: number;
   chicagoTeam: string;
   chicagoIsHome: boolean;
-  // Approximate venue coordinates for context
   venueLat: number;
   venueLng: number;
 }
 
-// Chicago team abbreviations by ESPN sport/league
 const CHICAGO_TEAMS: Record<string, { abbr: string; name: string; lat: number; lng: number }[]> = {
   'baseball/mlb': [
     { abbr: 'CHC', name: 'Cubs', lat: 41.9484, lng: -87.6553 },
@@ -39,13 +38,45 @@ function todayDateStr(): string {
   return new Date().toISOString().slice(0, 10).replace(/-/g, '');
 }
 
+function todayKey(): string {
+  return new Date().toISOString().slice(0, 10); // YYYY-MM-DD
+}
+
 export function useSportsTonight() {
   const [games, setGames] = useState<ChicagoGame[]>([]);
   const [loading, setLoading] = useState(true);
+  const lastFetchedDate = useRef<string>('');
+  const pollInterval = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
     fetchGames();
+
+    const subscription = AppState.addEventListener('change', handleAppStateChange);
+    return () => {
+      subscription.remove();
+      clearLivePoll();
+    };
   }, []);
+
+  function handleAppStateChange(state: AppStateStatus) {
+    if (state === 'active' && todayKey() !== lastFetchedDate.current) {
+      fetchGames();
+    }
+  }
+
+  function clearLivePoll() {
+    if (pollInterval.current) {
+      clearInterval(pollInterval.current);
+      pollInterval.current = null;
+    }
+  }
+
+  function startLivePoll() {
+    clearLivePoll();
+    pollInterval.current = setInterval(() => {
+      fetchGames();
+    }, 30000);
+  }
 
   async function fetchGames() {
     const date = todayDateStr();
@@ -101,8 +132,16 @@ export function useSportsTonight() {
       }
     }));
 
+    lastFetchedDate.current = todayKey();
     setGames(results);
     setLoading(false);
+
+    const anyLive = results.some(g => g.status === 'in');
+    if (anyLive) {
+      startLivePoll();
+    } else {
+      clearLivePoll();
+    }
   }
 
   return { games, loading };
