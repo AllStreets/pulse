@@ -5,10 +5,12 @@ import type { Venue, Prediction } from '@/types';
 export interface HotVenue {
   venue: Venue;
   pingCount: number;
+  weightedScore: number;
   rank: number;
   callerCount: number;
   neighborhoodName: string;
   neighborhoodColor: string;
+  velocity: 'rising' | 'steady' | 'cooling';
 }
 
 export interface PredictionWithVenue extends Prediction {
@@ -16,10 +18,12 @@ export interface PredictionWithVenue extends Prediction {
 }
 
 function parseVenue(v: any): Venue {
-  return {
-    ...v,
-    coordinates: { lat: v.lat, lng: v.lng },
-  };
+  return { ...v, coordinates: { lat: v.lat, lng: v.lng } };
+}
+
+function decayWeight(pingedAt: string): number {
+  const ageMinutes = (Date.now() - new Date(pingedAt).getTime()) / 60000;
+  return Math.exp((-ageMinutes * Math.LN2) / 30); // half-life 30 min
 }
 
 export function useTonightFeed(userId: string | null) {
@@ -38,25 +42,32 @@ export function useTonightFeed(userId: string | null) {
 
   async function fetchHotVenues() {
     const twoHoursAgo = new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString();
+    const thirtyMinsAgo = new Date(Date.now() - 30 * 60 * 1000).toISOString();
 
     const { data: pings } = await supabase
       .from('location_pings')
-      .select('venue_id')
+      .select('venue_id, pinged_at')
       .gte('pinged_at', twoHoursAgo);
 
-    if (!pings) return;
+    if (!pings?.length) { setHotVenues([]); return; }
 
-    const counts = new Map<string, number>();
+    const scores = new Map<string, number>();
+    const recentScores = new Map<string, number>();
+    const rawCounts = new Map<string, number>();
+
     for (const p of pings) {
-      if (p.venue_id) counts.set(p.venue_id, (counts.get(p.venue_id) ?? 0) + 1);
+      if (!p.venue_id) continue;
+      const w = decayWeight(p.pinged_at);
+      scores.set(p.venue_id, (scores.get(p.venue_id) ?? 0) + w);
+      rawCounts.set(p.venue_id, (rawCounts.get(p.venue_id) ?? 0) + 1);
+      if (p.pinged_at >= thirtyMinsAgo) {
+        recentScores.set(p.venue_id, (recentScores.get(p.venue_id) ?? 0) + w);
+      }
     }
 
-    if (counts.size === 0) {
-      setHotVenues([]);
-      return;
-    }
+    if (scores.size === 0) { setHotVenues([]); return; }
 
-    const venueIds = Array.from(counts.keys());
+    const venueIds = Array.from(scores.keys());
     const { data: venueData } = await supabase
       .from('venues_geo')
       .select('*')
@@ -65,17 +76,26 @@ export function useTonightFeed(userId: string | null) {
     if (!venueData) return;
 
     const sorted = venueData
-      .map((v: any) => ({ venue: parseVenue(v), pingCount: counts.get(v.id) ?? 0 }))
-      .sort((a, b) => b.pingCount - a.pingCount)
+      .map((v: any) => {
+        const rawScore = scores.get(v.id) ?? 0;
+        const recentScore = recentScores.get(v.id) ?? 0;
+        const olderScore = rawScore - recentScore;
+        let velocity: 'rising' | 'steady' | 'cooling' = 'steady';
+        if (recentScore > olderScore * 1.3) velocity = 'rising';
+        else if (recentScore < olderScore * 0.7) velocity = 'cooling';
+        return {
+          venue: parseVenue(v),
+          pingCount: rawCounts.get(v.id) ?? 0,
+          weightedScore: rawScore,
+          velocity,
+        };
+      })
+      .sort((a, b) => b.weightedScore - a.weightedScore)
       .slice(0, 15)
       .map((item, i) => ({ ...item, rank: i + 1 }));
 
-    if (sorted.length === 0) {
-      setHotVenues([]);
-      return;
-    }
+    if (sorted.length === 0) { setHotVenues([]); return; }
 
-    // Fetch caller counts
     const hotVenueIds = sorted.map((item) => item.venue.id);
     const today = new Date().toISOString().split('T')[0];
     const { data: predRows } = await supabase
@@ -90,7 +110,6 @@ export function useTonightFeed(userId: string | null) {
       callerCounts.set(row.target_id, (callerCounts.get(row.target_id) ?? 0) + 1);
     }
 
-    // Fetch neighborhood names + colors for the venues
     const neighborhoodIds = [...new Set(sorted.map((item) => item.venue.neighborhood_id).filter(Boolean))];
     const { data: hoodData } = await supabase
       .from('neighborhoods')
@@ -101,7 +120,7 @@ export function useTonightFeed(userId: string | null) {
       (hoodData ?? []).map((h: any) => [h.id, { name: h.name, color: h.map_color ?? '#3B82F6' }])
     );
 
-    const withMeta = sorted.map((item) => {
+    setHotVenues(sorted.map((item) => {
       const hood = hoodMap.get(item.venue.neighborhood_id);
       return {
         ...item,
@@ -109,9 +128,7 @@ export function useTonightFeed(userId: string | null) {
         neighborhoodName: hood?.name ?? '',
         neighborhoodColor: hood?.color ?? '#3B82F6',
       };
-    });
-
-    setHotVenues(withMeta);
+    }));
   }
 
   async function fetchMyPredictions(uid: string) {

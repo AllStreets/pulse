@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react';
 import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
 import Constants from 'expo-constants';
+import { useRouter } from 'expo-router';
 import { supabase } from '@/lib/supabase';
 
 Notifications.setNotificationHandler({
@@ -69,17 +70,32 @@ export async function notifyIfCallsPoppingOff(
 }
 
 export function useNotificationListener() {
+  const router = useRouter();
   const notifListener = useRef<Notifications.Subscription | null>(null);
+  const responseListener = useRef<Notifications.Subscription | null>(null);
 
   useEffect(() => {
+    // Fired when notification arrives while app is foregrounded
     notifListener.current = Notifications.addNotificationReceivedListener(() => {
-      // Future: navigate to venue sheet
+      // No-op: banner shows automatically via setNotificationHandler above
+    });
+
+    // Fired when user taps the notification
+    responseListener.current = Notifications.addNotificationResponseReceivedListener((response) => {
+      const data = response.notification.request.content.data as Record<string, string> | undefined;
+      if (!data) return;
+      if (data.venueId) {
+        // Navigate to tonight tab; VenueSheet opens when selectedVenue is set
+        // Store the pending venue open in a global signal via router params
+        router.push({ pathname: '/(tabs)', params: { openVenueId: data.venueId } });
+      } else if (data.neighborhoodId) {
+        router.push({ pathname: '/(tabs)', params: { openNeighborhoodId: data.neighborhoodId } });
+      }
     });
 
     return () => {
-      if (notifListener.current) {
-        notifListener.current.remove();
-      }
+      notifListener.current?.remove();
+      responseListener.current?.remove();
     };
-  }, []);
+  }, [router]);
 }

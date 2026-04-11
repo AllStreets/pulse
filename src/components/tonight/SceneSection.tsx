@@ -5,12 +5,21 @@ import type { NeighborhoodMeta } from '@/hooks/useNeighborhoods';
 interface Props {
   neighborhoods: NeighborhoodMeta[];
   onPress?: (neighborhood: NeighborhoodMeta) => void;
+  hotOnly?: boolean;
 }
 
-export function SceneSection({ neighborhoods, onPress }: Props) {
-  if (neighborhoods.length === 0) return null;
+function VelocityIcon({ velocity }: { velocity: NeighborhoodMeta['velocity'] }) {
+  if (velocity === 'rising') return <Ionicons name="trending-up" size={11} color="#4CAF50" />;
+  if (velocity === 'cooling') return <Ionicons name="trending-down" size={11} color="#888" />;
+  return null;
+}
 
-  const sorted = [...neighborhoods].sort((a, b) => b.ping_count - a.ping_count);
+export function SceneSection({ neighborhoods, onPress, hotOnly = false }: Props) {
+  const list = hotOnly
+    ? neighborhoods.filter(n => n.is_hot)
+    : neighborhoods;
+
+  if (list.length === 0) return null;
 
   return (
     <View style={styles.container}>
@@ -19,14 +28,17 @@ export function SceneSection({ neighborhoods, onPress }: Props) {
         <Text style={styles.sectionTitle}>Scenes Tonight</Text>
       </View>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.scroll}>
-        {sorted.map(n => (
+        {list.map(n => (
           <TouchableOpacity
             key={n.id}
             style={[styles.card, { borderLeftColor: n.map_color }]}
             onPress={() => onPress?.(n)}
             activeOpacity={onPress ? 0.7 : 1}
           >
-            <Text style={styles.name}>{n.name}</Text>
+            <View style={styles.nameRow}>
+              <Text style={styles.name} numberOfLines={1}>{n.name}</Text>
+              {n.velocity && <VelocityIcon velocity={n.velocity} />}
+            </View>
             <Text style={styles.description} numberOfLines={2}>{n.scene_description}</Text>
             <View style={styles.tags}>
               {n.vibe_tags.slice(0, 3).map(tag => (
@@ -63,7 +75,8 @@ const styles = StyleSheet.create({
     width: 180, backgroundColor: '#111', borderRadius: 14, padding: 14,
     borderWidth: 1, borderColor: '#1e1e1e', borderLeftWidth: 3, gap: 8,
   },
-  name: { color: '#fff', fontSize: 15, fontWeight: '700' },
+  nameRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  name: { color: '#fff', fontSize: 15, fontWeight: '700', flex: 1 },
   description: { color: '#555', fontSize: 11, lineHeight: 16 },
   tags: { flexDirection: 'row', flexWrap: 'wrap', gap: 4 },
   tag: { borderWidth: 1, borderRadius: 20, paddingHorizontal: 7, paddingVertical: 2 },

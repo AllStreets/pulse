@@ -28,14 +28,20 @@ export default function LoginScreen() {
     else Alert.alert('Check your email', 'A password reset link has been sent to ' + email.trim());
   }
 
+  function validateUsername(u: string): string | null {
+    if (u.length < 3) return 'Username must be at least 3 characters.';
+    if (u.length > 20) return 'Username must be 20 characters or fewer.';
+    if (!/^[a-zA-Z0-9_]+$/.test(u)) return 'Username can only contain letters, numbers, and underscores.';
+    return null;
+  }
+
   async function handleSubmit() {
     setLoading(true);
     try {
       if (isSignUp) {
-        if (!username.trim()) {
-          Alert.alert('Username required');
-          return;
-        }
+        const usernameErr = validateUsername(username.trim());
+        if (usernameErr) { Alert.alert('Invalid username', usernameErr); return; }
+        if (password.length < 8) { Alert.alert('Weak password', 'Password must be at least 8 characters.'); return; }
         const { error } = await signUpWithEmail(email, password, username.trim());
         if (error) Alert.alert('Sign up failed', error.message);
         else router.replace('/(auth)/onboarding');

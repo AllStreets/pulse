@@ -189,6 +189,11 @@ export default function TonightScreen() {
           <Text style={styles.sectionTitle}>Hot Right Now</Text>
         </View>
 
+        {/* Hot neighborhoods strip — shown when venues are quiet but neighborhoods have activity */}
+        {!loading && hotVenues.length === 0 && neighborhoods.some(n => n.is_hot) && (
+          <SceneSection neighborhoods={neighborhoods} onPress={setSelectedNeighborhood} hotOnly />
+        )}
+
         {loading ? (
           <VenueCardSkeleton />
         ) : hotVenues.length === 0 ? (
@@ -223,6 +228,7 @@ export default function TonightScreen() {
                     <View style={styles.pingRow}>
                       <Ionicons name="radio-button-on" size={10} color={color} />
                       <Text style={[styles.pingCount, { color }]}>{item.pingCount} live signal{item.pingCount !== 1 ? 's' : ''}</Text>
+                      {item.velocity === 'rising' && <Ionicons name="trending-up" size={11} color="#4CAF50" />}
                       {item.callerCount > 0 && (
                         <>
                           <Text style={styles.pingDot}>·</Text>
