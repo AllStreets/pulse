@@ -40,6 +40,7 @@ export function VenueSheet({ venue, onClose }: Props) {
   }));
 
   const alreadyCalled = venue ? hasCalledTarget(venue.id) : false;
+  const badgeColor = venue ? heatColor(venue.current_heat_score) : '#00d4ff';
 
   async function handleCall() {
     if (alreadyCalled || !canCall) return;
@@ -76,11 +77,11 @@ export function VenueSheet({ venue, onClose }: Props) {
                 </View>
               </View>
               {/* Heat badge */}
-              <View style={[styles.heatBadge, { backgroundColor: heatColor(venue.current_heat_score) + '22', borderColor: heatColor(venue.current_heat_score) + '88' }]}>
-                <Text style={[styles.heatScore, { color: heatColor(venue.current_heat_score) }]}>
+              <View style={[styles.heatBadge, { backgroundColor: badgeColor + '22', borderColor: badgeColor + '88' }]}>
+                <Text style={[styles.heatScore, { color: badgeColor }]}>
                   {Math.round(venue.current_heat_score)}
                 </Text>
-                <Text style={[styles.heatLabel, { color: heatColor(venue.current_heat_score) + 'AA' }]}>HEAT</Text>
+                <Text style={[styles.heatLabel, { color: badgeColor + 'AA' }]}>HEAT</Text>
               </View>
             </View>
 
@@ -133,7 +134,11 @@ export function VenueSheet({ venue, onClose }: Props) {
               {venue.phone && (
                 <TouchableOpacity
                   style={styles.infoRow}
-                  onPress={() => Linking.openURL(`tel:${venue.phone}`)}
+                  onPress={() => {
+                    Linking.canOpenURL(`tel:${venue.phone!}`)
+                      .then((supported) => { if (supported) Linking.openURL(`tel:${venue.phone!}`); })
+                      .catch(() => {});
+                  }}
                   activeOpacity={0.7}
                 >
                   <Ionicons name="call-outline" size={15} color="#4a5568" style={styles.infoIcon} />
