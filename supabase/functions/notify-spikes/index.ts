@@ -113,9 +113,10 @@ Deno.serve(async (_req) => {
   const userIds = [...new Set(predictions.map((p: any) => p.user_id))];
   const { data: profiles } = await supabase
     .from('profiles')
-    .select('id, push_token')
+    .select('id, push_token, notifications_enabled')
     .in('id', userIds)
-    .not('push_token', 'is', null);
+    .not('push_token', 'is', null)
+    .eq('notifications_enabled', true);
 
   const tokenMap = new Map((profiles ?? []).map((p: any) => [p.id, p.push_token]));
 
