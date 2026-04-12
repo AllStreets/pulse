@@ -107,7 +107,7 @@ export const STADIUMS: Stadium[] = [
     id: 'wintrust-arena',
     name: 'Wintrust Arena',
     shortName: 'Wintrust Arena',
-    coords: [-87.6200, 41.8756],
+    coords: [-87.6267, 41.8531], // 200 E Cermak Rd — near South Loop, not Grant Park
     teams: [
       {
         id: 'sky',

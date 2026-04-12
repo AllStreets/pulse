@@ -31,15 +31,14 @@ export const NEIGHBORHOOD_BOUNDARIES: Record<string, GeoJSON.Polygon> = {
     ]],
   },
   'river-north': {
+    // Bounded by Chicago River (S), Michigan Ave (E), Chicago Ave (N), Orleans/Wells (W)
+    // Does NOT cross Michigan Ave — Streeterville sits east of that line
     type: 'Polygon',
     coordinates: [[
-      [-87.6408, 41.8858], // Wells & Kinzie — south edge along river (SW)
-      [-87.6350, 41.8840], // Orleans & Kinzie
-      [-87.6312, 41.8840], // Clark & Kinzie (SE)
-      [-87.6241, 41.8858], // Michigan Ave/Grand (SE)
-      [-87.6222, 41.8910], // Michigan curves northward
-      [-87.6241, 41.8965], // Michigan & Chicago Ave (NE)
-      [-87.6280, 41.8965], // Chicago Ave heading west
+      [-87.6408, 41.8858], // Wells & Kinzie (SW)
+      [-87.6312, 41.8858], // Clark/Lake — river edge heading east
+      [-87.6241, 41.8858], // Michigan Ave & Grand (SE — shared with Streeterville W edge)
+      [-87.6241, 41.8965], // Michigan Ave & Chicago Ave (NE)
       [-87.6355, 41.8965], // Clark & Chicago Ave
       [-87.6408, 41.8940], // Orleans & Superior
       [-87.6408, 41.8858], // close
@@ -90,17 +89,18 @@ export const NEIGHBORHOOD_BOUNDARIES: Record<string, GeoJSON.Polygon> = {
     ]],
   },
   'streeterville': {
+    // East of Michigan Ave, between Grand Ave (S) and Oak St (N)
+    // Eastern boundary follows Lake Shore Dr — stays on land, never in the lake
     type: 'Polygon',
     coordinates: [[
-      [-87.6251, 41.8873], // Michigan Ave & Grand (SW)
-      [-87.6213, 41.8858], // Columbus Dr approaching river
-      [-87.6175, 41.8863], // Lake Shore Dr approach from S
-      [-87.6145, 41.8900], // Lake Shore Dr heading north
-      [-87.6145, 41.9010], // Lake Shore Dr & Oak St (NE)
-      [-87.6180, 41.9030], // Navy Pier blvd
-      [-87.6213, 41.9015], // Michigan Ave & Oak St (NW)
-      [-87.6251, 41.8965], // Michigan Ave heading south
-      [-87.6251, 41.8873], // close
+      [-87.6241, 41.8858], // Michigan Ave & Grand (SW)
+      [-87.6175, 41.8858], // Grand Ave heading east toward LSD
+      [-87.6145, 41.8890], // Lake Shore Dr & Grand — lakefront here curves in
+      [-87.6130, 41.8950], // LSD heading north
+      [-87.6130, 41.9010], // LSD & Oak St (NE)
+      [-87.6213, 41.9010], // Michigan Ave & Oak St (NW)
+      [-87.6241, 41.8965], // Michigan Ave heading south
+      [-87.6241, 41.8858], // close
     ]],
   },
   'lincoln-park': {

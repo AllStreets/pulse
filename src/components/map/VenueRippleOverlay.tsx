@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { View, StyleSheet, Animated, Easing } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 
 export interface VenueScreenCoord {
   id: string;
@@ -23,21 +23,23 @@ function categoryColor(category: string): string {
   return '#3b82f6';
 }
 
-function categoryIcon(category: string): React.ComponentProps<typeof Ionicons>['name'] {
+// Returns an Ionicons name, or null for generic bars (rendered as a custom barstool)
+function categoryIcon(category: string): React.ComponentProps<typeof Ionicons>['name'] | null {
   const c = category.toLowerCase();
   if (c.includes('nightclub') || c.includes('club')) return 'musical-notes';
   if (c.includes('cocktail')) return 'wine';
-  if (c.includes('dive')) return 'beer';
+  if (c.includes('dive')) return null;
   if (c.includes('rooftop')) return 'sunny';
   if (c.includes('lgbtq') || c.includes('gay')) return 'heart';
   if (c.includes('craft beer') || c.includes('brewery')) return 'beer';
   if (c.includes('sports') || c.includes('bar & grill') || c.includes('bar and grill')) return 'trophy';
   if (c.includes('lounge')) return 'moon';
-  return 'wine';
+  return null; // generic bar → BarstoolIcon
 }
 
 interface Props {
   coords: VenueScreenCoord[];
+  activeVenueIds: string[];
 }
 
 function pulseDuration(heatScore: number): number {
@@ -47,20 +49,21 @@ function pulseDuration(heatScore: number): number {
   return 3000;
 }
 
-// Dot is 22px diameter; container is offset by half (22/2 = 11 + ring overflow room = 20)
-const DOT_RADIUS = 11;
-const CONTAINER_SIZE = 44;
-const RING_SIZE = 36;
-const GLOW_SIZE = 32;
+// Dot is 34px diameter (~75% of the 46px stadium badge size)
+const DOT_RADIUS = 17;
+const CONTAINER_SIZE = 62;
+const RING_SIZE = 52;
+const GLOW_SIZE = 46;
 
 interface RippleDotProps {
   x: number;
   y: number;
   heatScore: number;
   category: string;
+  active: boolean;
 }
 
-function RippleDot({ x, y, heatScore, category }: RippleDotProps) {
+function RippleDot({ x, y, heatScore, category, active }: RippleDotProps) {
   const dotScale = useRef(new Animated.Value(1)).current;
   const ringScale = useRef(new Animated.Value(1)).current;
   const ringOpacity = useRef(new Animated.Value(0.8)).current;
@@ -72,6 +75,10 @@ function RippleDot({ x, y, heatScore, category }: RippleDotProps) {
   useEffect(() => {
     dotScale.setValue(1);
     glowOpacity.setValue(0);
+    ringScale.setValue(1);
+    ringOpacity.setValue(0.8);
+
+    if (!active) return;
 
     const dotLoop = Animated.loop(
       Animated.sequence([
@@ -105,25 +112,29 @@ function RippleDot({ x, y, heatScore, category }: RippleDotProps) {
       rippleLoop.stop();
       clearTimeout(timeout);
     };
-  }, [duration]);
+  }, [duration, active]);
 
   return (
     <View style={[styles.dotContainer, { left: x - CONTAINER_SIZE / 2, top: y - CONTAINER_SIZE / 2 }]}>
-      {/* Outer ripple ring */}
-      <Animated.View
-        style={[
-          styles.ring,
-          {
-            borderColor: color,
-            opacity: ringOpacity,
-            transform: [{ scale: ringScale }],
-          },
-        ]}
-      />
-      {/* Glow layer */}
-      <Animated.View
-        style={[styles.glow, { backgroundColor: color, opacity: glowOpacity }]}
-      />
+      {/* Outer ripple ring — only rendered for active venues */}
+      {active && (
+        <Animated.View
+          style={[
+            styles.ring,
+            {
+              borderColor: color,
+              opacity: ringOpacity,
+              transform: [{ scale: ringScale }],
+            },
+          ]}
+        />
+      )}
+      {/* Glow layer — only rendered for active venues */}
+      {active && (
+        <Animated.View
+          style={[styles.glow, { backgroundColor: color, opacity: glowOpacity }]}
+        />
+      )}
       {/* Dot + icon */}
       <Animated.View
         style={[
@@ -135,19 +146,29 @@ function RippleDot({ x, y, heatScore, category }: RippleDotProps) {
           },
         ]}
       >
-        <Ionicons name={icon} size={12} color="#fff" />
+        {icon !== null
+          ? <Ionicons name={icon} size={18} color="#fff" />
+          : <MaterialCommunityIcons name="stool" size={19} color="#fff" />
+        }
       </Animated.View>
     </View>
   );
 }
 
-export function VenueRippleOverlay({ coords }: Props) {
+export function VenueRippleOverlay({ coords, activeVenueIds }: Props) {
   if (coords.length === 0) return null;
 
   return (
     <View style={StyleSheet.absoluteFillObject} pointerEvents="none">
       {coords.map(c => (
-        <RippleDot key={c.id} x={c.x} y={c.y} heatScore={c.heatScore} category={c.category} />
+        <RippleDot
+          key={c.id}
+          x={c.x}
+          y={c.y}
+          heatScore={c.heatScore}
+          category={c.category}
+          active={activeVenueIds.includes(c.id)}
+        />
       ))}
     </View>
   );
@@ -177,8 +198,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0.8,
-    shadowRadius: 6,
-    elevation: 6,
+    shadowRadius: 9,
+    elevation: 8,
   },
   ring: {
     position: 'absolute',
