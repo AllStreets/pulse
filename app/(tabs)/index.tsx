@@ -12,9 +12,17 @@ import { NeighborhoodSheet } from '@/components/map/NeighborhoodSheet';
 import { LiveIntelPanel } from '@/components/map/LiveIntelPanel';
 import { VenueRippleOverlay } from '@/components/map/VenueRippleOverlay';
 import type { VenueScreenCoord } from '@/components/map/VenueRippleOverlay';
+import { StadiumLayer } from '@/components/map/StadiumLayer';
+import type { StadiumScreenCoord } from '@/components/map/StadiumLayer';
+import { StadiumSheet } from '@/components/map/StadiumSheet';
+import { allStadiumTeams } from '@/data/stadiums';
+import type { StadiumTeamEntry } from '@/data/stadiums';
 import { useHeatmap } from '@/hooks/useHeatmap';
 import { useNeighborhoods } from '@/hooks/useNeighborhoods';
 import { useHotVenuesStore } from '@/stores/hotVenuesStore';
+import { useFriendships } from '@/hooks/useFriendships';
+import { useFriendsHeatmap } from '@/hooks/useFriendsHeatmap';
+import { useUserStore } from '@/stores/userStore';
 import type { Venue } from '@/types';
 import type { NeighborhoodMeta } from '@/hooks/useNeighborhoods';
 
@@ -23,9 +31,12 @@ MapboxGL.setAccessToken(process.env.EXPO_PUBLIC_MAPBOX_TOKEN!);
 const CHICAGO_CENTER: [number, number] = [-87.6594, 41.9036];
 
 export default function MapScreen() {
-  const { venues, heatPoints } = useHeatmap();
+  const { venues, heatPoints, activeVenueIds } = useHeatmap();
   const { neighborhoods } = useNeighborhoods();
   const { hotVenues, fetchHotVenues } = useHotVenuesStore();
+  const profile = useUserStore((s) => s.profile);
+  const { friendUserIds } = useFriendships(profile?.id ?? null);
+  const { heatPoints: friendsHeatPoints, activeVenueIds: friendsActiveVenueIds } = useFriendsHeatmap(friendUserIds);
 
   // Trigger initial fetch if store hasn't loaded yet
   useEffect(() => {
@@ -38,8 +49,11 @@ export default function MapScreen() {
   const [zoom, setZoom] = useState(10.5);
   const [showNeighborhoods, setShowNeighborhoods] = useState(true);
   const [showCTA, setShowCTA] = useState(false);
+  const [friendsMode, setFriendsMode] = useState(false);
   const [mapLoaded, setMapLoaded] = useState(false);
   const [venueScreenCoords, setVenueScreenCoords] = useState<VenueScreenCoord[]>([]);
+  const [stadiumScreenCoords, setStadiumScreenCoords] = useState<StadiumScreenCoord[]>([]);
+  const [selectedStadiumEntry, setSelectedStadiumEntry] = useState<StadiumTeamEntry | null>(null);
   const [mapMoving, setMapMoving] = useState(false);
   const [panelHeight, setPanelHeight] = useState(0);
 
@@ -56,7 +70,10 @@ export default function MapScreen() {
 
   // Compute screen coords for visible venues on every camera change.
   // Hide overlay while moving; recompute and show once camera settles.
-  const handleCameraChanged = useCallback(async () => {
+  const handleCameraChanged = useCallback(async (e?: any) => {
+    if (e?.properties?.zoom !== undefined) {
+      setZoom(e.properties.zoom);
+    }
     if (!mapViewRef.current || venues.length === 0) return;
 
     // Mark map as moving immediately — hides the overlay
@@ -85,6 +102,25 @@ export default function MapScreen() {
           })
         );
         setVenueScreenCoords(coordPairs);
+
+        // Compute stadium screen coords with zoom-based spread for shared stadiums
+        const SPREAD_ZOOM = 13;
+        const stadiumEntries = allStadiumTeams();
+        const stadiumCoords: StadiumScreenCoord[] = await Promise.all(
+          stadiumEntries.map(async entry => {
+            const base = await mapViewRef.current!.getPointInView(entry.stadiumCoords);
+            const spread = zoom >= SPREAD_ZOOM ? 1 : 0;
+            return {
+              stadiumId: entry.stadiumId,
+              teamId: entry.team.id,
+              x: base[0] + entry.team.spreadOffset.x * spread,
+              y: base[1] + entry.team.spreadOffset.y * spread,
+              entry,
+            };
+          })
+        );
+        setStadiumScreenCoords(stadiumCoords);
+
         setMapMoving(false);
       } catch {
         setMapMoving(false);
@@ -164,9 +200,8 @@ export default function MapScreen() {
             <NeighborhoodLayer
               neighborhoods={neighborhoods}
               visible={showNeighborhoods}
-              onPress={setSelectedNeighborhood}
             />
-            <HeatmapLayer points={heatPoints} />
+            <HeatmapLayer points={friendsMode ? friendsHeatPoints : heatPoints} zoom={zoom} />
             <CTARoutesLayer visible={showCTA} />
             <CTALayer visible={showCTA} />
             <VenueLayer venues={venues} onPress={setSelectedVenue} />
@@ -174,8 +209,21 @@ export default function MapScreen() {
         )}
       </MapboxGL.MapView>
 
-      {/* Ripple overlay — hidden while map is moving to avoid stale positions */}
-      {!mapMoving && <VenueRippleOverlay coords={venueScreenCoords} />}
+      {/* Ripple overlay — all venues shown, only those with active pings pulse */}
+      {!mapMoving && (
+        <VenueRippleOverlay
+          coords={venueScreenCoords}
+          activeVenueIds={friendsMode ? friendsActiveVenueIds : activeVenueIds}
+        />
+      )}
+
+      {/* Stadium team badges */}
+      {!mapMoving && (
+        <StadiumLayer
+          coords={stadiumScreenCoords}
+          onPress={setSelectedStadiumEntry}
+        />
+      )}
 
       {/* Live Intel Panel — floats over map below safe area */}
       <View
@@ -193,11 +241,11 @@ export default function MapScreen() {
       {/* Layer toggles — positioned below the panel */}
       <View style={[styles.layerToggles, { top: insets.top + panelHeight + 8 }]}>
         <TouchableOpacity
-          style={[styles.toggleBtn, showNeighborhoods && styles.toggleBtnActive]}
-          onPress={() => setShowNeighborhoods(v => !v)}
+          style={[styles.toggleBtn, friendsMode && styles.toggleBtnActive]}
+          onPress={() => setFriendsMode(v => !v)}
         >
-          <Text style={[styles.toggleText, showNeighborhoods && styles.toggleTextActive]}>
-            Scenes
+          <Text style={[styles.toggleText, friendsMode && styles.toggleTextActive]}>
+            {friendsMode ? 'Friends' : 'City'}
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
@@ -234,6 +282,11 @@ export default function MapScreen() {
           setTimeout(() => setSelectedVenue(v), 300);
         }}
         neighborhoodRank={neighborhoodRank || undefined}
+      />
+
+      <StadiumSheet
+        entry={selectedStadiumEntry}
+        onClose={() => setSelectedStadiumEntry(null)}
       />
     </View>
   );
