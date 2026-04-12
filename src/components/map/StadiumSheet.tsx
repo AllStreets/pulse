@@ -1,6 +1,6 @@
 import { useRef, useCallback, useEffect, useMemo, useState } from 'react';
 import {
-  View, Text, StyleSheet, TouchableOpacity, useWindowDimensions,
+  View, Text, Image, StyleSheet, TouchableOpacity, useWindowDimensions,
 } from 'react-native';
 import BottomSheet, { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -11,6 +11,16 @@ import { useUserStore } from '@/stores/userStore';
 import { HeatChart } from '@/components/venue/HeatChart';
 import { useStadiumActivity } from '@/hooks/useStadiumActivity';
 import type { StadiumTeamEntry } from '@/data/stadiums';
+
+/** Returns the more visible of the two colors for use on a dark background. */
+function accentColor(primary: string, secondary: string): string {
+  const hex = primary.replace('#', '');
+  const r = parseInt(hex.slice(0, 2), 16);
+  const g = parseInt(hex.slice(2, 4), 16);
+  const b = parseInt(hex.slice(4, 6), 16);
+  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+  return luminance < 0.25 ? secondary : primary;
+}
 
 interface Props {
   entry: StadiumTeamEntry | null;
@@ -85,8 +95,10 @@ export function StadiumSheet({ entry, onClose }: Props) {
 
   const onCooldown = cooldownLeft > 0;
   const minsLeft = Math.ceil(cooldownLeft / 60_000);
-  const color = entry?.team.primaryColor ?? '#00d4ff';
-  const border = entry?.team.secondaryColor ?? '#1e3a5f';
+  // Use secondary color when primary is too dark to see on #111 background
+  const color = entry
+    ? accentColor(entry.team.primaryColor, entry.team.secondaryColor)
+    : '#00d4ff';
 
   return (
     <BottomSheet
@@ -103,8 +115,12 @@ export function StadiumSheet({ entry, onClose }: Props) {
         <BottomSheetScrollView contentContainerStyle={styles.content}>
           {/* Header */}
           <View style={styles.header}>
-            <View style={[styles.teamBadge, { backgroundColor: color + '22', borderColor: color + '80' }]}>
-              <Text style={[styles.teamAbbrev, { color }]}>{entry.team.abbrev}</Text>
+            <View style={[styles.teamBadge, { backgroundColor: entry.team.primaryColor, borderColor: color }]}>
+              <Image
+                source={{ uri: entry.team.logoUrl }}
+                style={styles.teamLogo}
+                resizeMode="contain"
+              />
             </View>
             <View style={styles.headerText}>
               <Text style={styles.teamName}>{entry.team.name}</Text>
@@ -170,10 +186,11 @@ const styles = StyleSheet.create({
 
   header: { flexDirection: 'row', alignItems: 'flex-start', gap: 14 },
   teamBadge: {
-    width: 56, height: 56, borderRadius: 28, borderWidth: 2,
+    width: 56, height: 56, borderRadius: 28, borderWidth: 2.5,
     alignItems: 'center', justifyContent: 'center',
+    overflow: 'hidden',
   },
-  teamAbbrev: { fontSize: 13, fontWeight: '900', letterSpacing: -0.5 },
+  teamLogo: { width: 42, height: 42 },
   headerText: { flex: 1, gap: 3 },
   teamName: { color: '#fff', fontSize: 20, fontWeight: '800', letterSpacing: -0.4 },
   stadiumName: { color: '#555', fontSize: 13 },

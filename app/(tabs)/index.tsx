@@ -103,18 +103,17 @@ export default function MapScreen() {
         );
         setVenueScreenCoords(coordPairs);
 
-        // Compute stadium screen coords with zoom-based spread for shared stadiums
-        const SPREAD_ZOOM = 13;
+        // Compute stadium screen coords — spread offset always applied so
+        // teams sharing a stadium (Bulls/Blackhawks) are always both visible
         const stadiumEntries = allStadiumTeams();
         const stadiumCoords: StadiumScreenCoord[] = await Promise.all(
           stadiumEntries.map(async entry => {
             const base = await mapViewRef.current!.getPointInView(entry.stadiumCoords);
-            const spread = zoom >= SPREAD_ZOOM ? 1 : 0;
             return {
               stadiumId: entry.stadiumId,
               teamId: entry.team.id,
-              x: base[0] + entry.team.spreadOffset.x * spread,
-              y: base[1] + entry.team.spreadOffset.y * spread,
+              x: base[0] + entry.team.spreadOffset.x,
+              y: base[1] + entry.team.spreadOffset.y,
               entry,
             };
           })

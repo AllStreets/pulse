@@ -5,7 +5,9 @@ export interface StadiumTeam {
   sport: string;
   primaryColor: string;
   secondaryColor: string;
-  /** Pixel offset from stadium center when zoomed in (zoom >= 13).
+  /** URL for the team logo image */
+  logoUrl: string;
+  /** Pixel offset always applied to separate teams at shared stadiums.
    *  Positive x = right, positive y = down. */
   spreadOffset: { x: number; y: number };
 }
@@ -32,6 +34,7 @@ export const STADIUMS: Stadium[] = [
         sport: 'MLB',
         primaryColor: '#0E3386',
         secondaryColor: '#CC3433',
+        logoUrl: 'https://a.espncdn.com/i/teamlogos/mlb/500/chc.png',
         spreadOffset: { x: 0, y: 0 },
       },
     ],
@@ -49,6 +52,7 @@ export const STADIUMS: Stadium[] = [
         sport: 'MLB',
         primaryColor: '#27251F',
         secondaryColor: '#C4CED4',
+        logoUrl: 'https://a.espncdn.com/i/teamlogos/mlb/500/chw.png',
         spreadOffset: { x: 0, y: 0 },
       },
     ],
@@ -66,6 +70,7 @@ export const STADIUMS: Stadium[] = [
         sport: 'NFL',
         primaryColor: '#0B162A',
         secondaryColor: '#C83803',
+        logoUrl: 'https://a.espncdn.com/i/teamlogos/nfl/500/chi.png',
         spreadOffset: { x: 0, y: 0 },
       },
     ],
@@ -83,7 +88,8 @@ export const STADIUMS: Stadium[] = [
         sport: 'NBA',
         primaryColor: '#CE1141',
         secondaryColor: '#000000',
-        spreadOffset: { x: -22, y: 0 },
+        logoUrl: 'https://a.espncdn.com/i/teamlogos/nba/500/chi.png',
+        spreadOffset: { x: -24, y: 0 },
       },
       {
         id: 'blackhawks',
@@ -92,7 +98,8 @@ export const STADIUMS: Stadium[] = [
         sport: 'NHL',
         primaryColor: '#CF0A2C',
         secondaryColor: '#FF6720',
-        spreadOffset: { x: 22, y: 0 },
+        logoUrl: 'https://a.espncdn.com/i/teamlogos/nhl/500/chi.png',
+        spreadOffset: { x: 24, y: 0 },
       },
     ],
   },
@@ -109,6 +116,7 @@ export const STADIUMS: Stadium[] = [
         sport: 'WNBA',
         primaryColor: '#5091CD',
         secondaryColor: '#FFC72C',
+        logoUrl: 'https://a.espncdn.com/i/teamlogos/wnba/500/chi.png',
         spreadOffset: { x: 0, y: 0 },
       },
     ],
