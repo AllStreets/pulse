@@ -41,6 +41,7 @@ export function VenueSheet({ venue, onClose }: Props) {
 
   const alreadyCalled = venue ? hasCalledTarget(venue.id) : false;
   const badgeColor = venue ? heatColor(venue.current_heat_score) : '#00d4ff';
+  const pingCount = tonightTimeline.reduce((sum, p) => sum + p.heat, 0);
 
   async function handleCall() {
     if (alreadyCalled || !canCall) return;
@@ -176,8 +177,12 @@ export function VenueSheet({ venue, onClose }: Props) {
               neighborhoodId={venue.neighborhood_id}
             />
 
-            {/* Heat chart */}
+            {/* Heat chart + ping count */}
             <HeatChart points={tonightTimeline} label="Activity tonight" />
+            <View style={styles.pingCountCard}>
+              <Text style={styles.pingCountValue}>{pingCount}</Text>
+              <Text style={styles.pingCountLabel}>total pings tonight</Text>
+            </View>
 
             {/* Vibe tags */}
             <VibeTags tags={vibeTags} />
@@ -189,8 +194,8 @@ export function VenueSheet({ venue, onClose }: Props) {
 }
 
 const styles = StyleSheet.create({
-  background: { backgroundColor: '#0a1628' },
-  handle: { backgroundColor: '#1e3a5f', width: 36 },
+  background: { backgroundColor: '#111' },
+  handle: { backgroundColor: '#2a2a2a', width: 36 },
   content: { paddingHorizontal: 20, paddingTop: 8, paddingBottom: 40, gap: 20 },
 
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
@@ -235,4 +240,15 @@ const styles = StyleSheet.create({
   openRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: -8 },
   openDot: { width: 7, height: 7, borderRadius: 4 },
   openText: { fontSize: 12, fontWeight: '600' },
+
+  pingCountCard: {
+    backgroundColor: '#0d1628',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#1e3a5f',
+    padding: 14,
+    alignItems: 'center',
+  },
+  pingCountValue: { color: '#00d4ff', fontSize: 24, fontWeight: '800' },
+  pingCountLabel: { color: '#4a5568', fontSize: 11, marginTop: 2 },
 });
