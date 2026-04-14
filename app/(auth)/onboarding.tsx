@@ -13,8 +13,8 @@ const STEPS = [
   {
     icon: 'flame' as const,
     iconColor: '#FF6B00',
-    title: 'Know what's hot tonight.',
-    body: 'Pulse shows you real-time nightlife heat across Chicago — which venues are popping, which scenes are alive, and where the night is heading.',
+    title: 'Know what\u2019s hot tonight.',
+    body: 'Pulse shows you real-time nightlife heat across Chicago \u2014 which venues are popping, which scenes are alive, and where the night is heading.',
     cta: 'Next',
   },
   {
@@ -28,14 +28,14 @@ const STEPS = [
     icon: 'location' as const,
     iconColor: '#4CAF50',
     title: 'Power the heatmap.',
-    body: 'Tap "I'm Here" at a venue to send an anonymous signal. Your exact location is never stored — only the venue you tap.',
+    body: 'Tap \u201cI\u2019m Here\u201d at a venue to send an anonymous signal. Your exact location is never stored \u2014 only the venue you tap.',
     cta: 'Allow Location',
   },
   {
     icon: 'navigate' as const,
     iconColor: '#4CAF50',
     title: 'Keep the map live.',
-    body: 'Pulse works best with background location enabled. This lets you passively contribute to the heatmap when you're out. You can change this anytime in Settings.',
+    body: 'Pulse works best with background location enabled. This lets you passively contribute to the heatmap when you\u2019re out. You can change this anytime in Settings.',
     cta: 'Enable Background Location',
   },
 ];
