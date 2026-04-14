@@ -1,4 +1,4 @@
-import { ScrollView, View, Text, TouchableOpacity, StyleSheet, Switch, ActivityIndicator, Alert } from 'react-native';
+import { ScrollView, View, Text, TouchableOpacity, StyleSheet, Switch, ActivityIndicator, Alert, Linking } from 'react-native';
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -297,6 +297,13 @@ export default function ProfileScreen() {
         <Text style={styles.signOutText}>Sign out</Text>
       </TouchableOpacity>
 
+      <TouchableOpacity
+        style={styles.privacyLink}
+        onPress={() => Linking.openURL('https://allstreets.github.io/pulse-fresh/privacy-policy.html')}
+      >
+        <Text style={styles.privacyLinkText}>Privacy Policy</Text>
+      </TouchableOpacity>
+
       <TouchableOpacity style={styles.deleteAccount} onPress={handleDeleteAccount}>
         <Text style={styles.deleteAccountText}>Delete Account</Text>
       </TouchableOpacity>
@@ -377,6 +384,8 @@ const styles = StyleSheet.create({
 
   signOut: { marginTop: 40, paddingVertical: 14, alignItems: 'center' },
   signOutText: { color: '#1e3a5f', fontSize: 14 },
+  privacyLink: { marginTop: 24, paddingVertical: 10, alignItems: 'center' },
+  privacyLinkText: { color: '#1e3a5f', fontSize: 13 },
   deleteAccount: { marginTop: 8, paddingVertical: 14, alignItems: 'center' },
   deleteAccountText: { color: '#7f1d1d', fontSize: 14 },
 
