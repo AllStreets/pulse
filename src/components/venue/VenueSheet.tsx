@@ -1,5 +1,5 @@
 import { useRef, useCallback, useEffect, useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Linking, Alert } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Linking, Share } from 'react-native';
 import BottomSheet, { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
@@ -13,9 +13,6 @@ import { useUserStore } from '@/stores/userStore';
 import { isOpenNow, openUntilString, todayHoursString } from '@/lib/hours';
 import { heatColor } from '@/lib/heatColor';
 import type { Venue } from '@/types';
-import ViewShot from 'react-native-view-shot';
-import * as Sharing from 'expo-sharing';
-import { ShareCard } from '../share/ShareCard';
 import { supabase } from '@/lib/supabase';
 
 interface Props {
@@ -30,7 +27,6 @@ export function VenueSheet({ venue, onClose }: Props) {
   const { callsRemaining, canCall, makeCall, hasCalledTarget } = usePredictions(profile?.id ?? null);
   const [neighborhoodName, setNeighborhoodName] = useState('');
   const [neighborhoodColor, setNeighborhoodColor] = useState('#3B82F6');
-  const shareCardRef = useRef<ViewShot>(null);
 
   useEffect(() => {
     if (venue) sheetRef.current?.expand();
@@ -76,13 +72,13 @@ export function VenueSheet({ venue, onClose }: Props) {
   }
 
   async function handleShare() {
-    try {
-      const uri = await shareCardRef.current?.capture();
-      if (!uri) return;
-      await Sharing.shareAsync(uri, { mimeType: 'image/png', dialogTitle: `${venue?.name} on Pulse` });
-    } catch {
-      Alert.alert('Could not share', 'Try again in a moment.');
-    }
+    if (!venue) return;
+    const heat = Math.round(venue.current_heat_score);
+    const label = heat >= 80 ? 'on fire 🔥' : heat >= 50 ? 'heating up 🔥' : heat >= 25 ? 'warming up' : 'quiet tonight';
+    const hood = neighborhoodName ? ` in ${neighborhoodName}` : '';
+    await Share.share({
+      message: `${venue.name}${hood} is ${label} right now (${heat} heat). Check it on Pulse — real-time Chicago nightlife.`,
+    });
   }
 
   return (
@@ -228,21 +224,6 @@ export function VenueSheet({ venue, onClose }: Props) {
         )}
       </BottomSheetScrollView>
 
-      {/* ViewShot lives here — outside scroll, still inside BottomSheet */}
-      {venue && (
-        <ViewShot
-          ref={shareCardRef}
-          options={{ format: 'png', quality: 1.0 }}
-          style={{ position: 'absolute', top: -9999, left: 0, opacity: 0 }}
-        >
-          <ShareCard
-            venueName={venue.name}
-            neighborhoodName={neighborhoodName}
-            heatScore={venue.current_heat_score ?? 0}
-            neighborhoodColor={neighborhoodColor}
-          />
-        </ViewShot>
-      )}
     </BottomSheet>
   );
 }
