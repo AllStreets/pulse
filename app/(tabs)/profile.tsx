@@ -1,16 +1,20 @@
-import { ScrollView, View, Text, TouchableOpacity, StyleSheet, Switch, ActivityIndicator } from 'react-native';
-import { useEffect, useState } from 'react';
-import { useRouter } from 'expo-router';
+import { ScrollView, View, Text, TouchableOpacity, StyleSheet, Switch, ActivityIndicator, Alert } from 'react-native';
+import { useEffect, useState, useCallback, useRef } from 'react';
+import { useRouter, useFocusEffect } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '@/hooks/useAuth';
 import { useUserStore } from '@/stores/userStore';
 import { usePredictions } from '@/hooks/usePredictions';
 import { supabase } from '@/lib/supabase';
 import { useLeaderboard } from '@/hooks/useLeaderboard';
+import { useFriendships } from '@/hooks/useFriendships';
+import { FriendRequestsPanel } from '@/components/friends/FriendRequestsPanel';
+import { FriendsListPanel } from '@/components/friends/FriendsListPanel';
 
 const BADGE_COLORS: Record<string, string> = {
   casual: '#555',
   regular: '#4A90D9',
-  local: '#3B82F6',
+  local: '#CE1141',
   legend: '#FFD700',
 };
 
@@ -22,28 +26,63 @@ export default function ProfileScreen() {
   const { predictions, callsRemaining } = usePredictions(profile?.id ?? null);
   const [pingCount, setPingCount] = useState<number | null>(null);
   const [notifEnabled, setNotifEnabled] = useState(true);
+  const [showRequests, setShowRequests] = useState(false);
+  const [showFriends, setShowFriends] = useState(false);
+  const [topVenues, setTopVenues] = useState<{ venueId: string; name: string; count: number }[]>([]);
+  const [showAllVenues, setShowAllVenues] = useState(false);
+  const [showAllCallers, setShowAllCallers] = useState(false);
+  const { friends, pendingIncoming, acceptRequest, declineRequest, removeFriend } = useFriendships(profile?.id ?? null);
   const { top10, userPercentile, lastNight } = useLeaderboard(
     profile?.id ?? null,
     profile?.heat_score ?? 0
   );
 
-  useEffect(() => {
-    if (!profile?.id) return;
-    supabase
-      .from('location_pings')
-      .select('id', { count: 'exact', head: true })
-      .eq('user_id', profile.id)
-      .then(({ count }) => setPingCount(count ?? 0));
+  const setProfile = useUserStore((s) => s.setProfile);
+  const profileIdRef = useRef<string | undefined>(undefined);
+  profileIdRef.current = profile?.id;
 
-    supabase
-      .from('profiles')
-      .select('notifications_enabled')
-      .eq('id', profile.id)
-      .single()
-      .then(({ data }) => {
-        if (data) setNotifEnabled(data.notifications_enabled);
-      });
-  }, [profile?.id]);
+  const [refreshKey, setRefreshKey] = useState(0);
+
+  useFocusEffect(useCallback(() => {
+    setRefreshKey(k => k + 1);
+    setShowAllVenues(false);
+    setShowAllCallers(false);
+  }, []));
+
+  useEffect(() => {
+    const userId = profileIdRef.current;
+    if (!userId) return;
+    let cancelled = false;
+    (async () => {
+      const [{ count }, { data: profileData }, { data: pingRows }] = await Promise.all([
+        supabase.from('location_pings').select('id', { count: 'exact', head: true }).eq('user_id', userId),
+        supabase.from('profiles').select('*').eq('id', userId).single(),
+        supabase.from('location_pings').select('venue_id').eq('user_id', userId),
+      ]);
+      if (cancelled) return;
+      setPingCount(count ?? 0);
+      if (profileData) {
+        setProfile(profileData);
+        setNotifEnabled(profileData.notifications_enabled);
+      }
+      if (pingRows?.length) {
+        const counts = new Map<string, number>();
+        for (const r of pingRows) counts.set(r.venue_id, (counts.get(r.venue_id) ?? 0) + 1);
+        const sorted = [...counts.entries()].sort((a, b) => b[1] - a[1]).slice(0, 10);
+        if (sorted.length) {
+          const { data: venueData } = await supabase.from('venues').select('id, name').in('id', sorted.map(([id]) => id));
+          if (cancelled) return;
+          const nameMap = new Map((venueData ?? []).map((v: any) => [v.id, v.name]));
+          setTopVenues(sorted.map(([venueId, c]) => ({ venueId, name: nameMap.get(venueId) ?? 'Unknown', count: c })));
+        } else {
+          setTopVenues([]);
+        }
+      } else {
+        setTopVenues([]);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [refreshKey, profile?.id]);
 
   if (!profile && (authLoading || session)) {
     return (
@@ -80,6 +119,32 @@ export default function ProfileScreen() {
     if (error) setNotifEnabled(!value); // revert on failure
   }
 
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+
+  async function handleDeleteAccount() {
+    if (!profile?.id) return;
+    Alert.alert(
+      'Delete Account',
+      'This permanently deletes your account and all your data. This cannot be undone.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete My Account',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              const { error } = await supabase.rpc('delete_own_account');
+              if (error) throw error;
+              await signOut();
+            } catch (e: any) {
+              Alert.alert('Error', e.message ?? 'Could not delete account. Try again.');
+            }
+          },
+        },
+      ]
+    );
+  }
+
   const scored = predictions.filter((p) => p.outcome !== 'pending' && p.outcome !== 'voided');
   const correct = scored.filter((p) => p.outcome === 'correct').length;
   const accuracy = scored.length > 0 ? Math.round((correct / scored.length) * 100) : null;
@@ -87,7 +152,23 @@ export default function ProfileScreen() {
   const badgeColor = BADGE_COLORS[profile.credibility_badge] ?? '#555';
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+    <View style={styles.root}>
+      {/* Top-right icon row */}
+      <View style={styles.iconRow}>
+        <TouchableOpacity style={styles.iconBtn} onPress={() => setShowRequests(true)}>
+          <Ionicons name="notifications-outline" size={22} color={pendingIncoming.length > 0 ? '#00d4ff' : '#4a5568'} />
+          {pendingIncoming.length > 0 && (
+            <View style={styles.notifDot}>
+              <Text style={styles.notifDotText}>{pendingIncoming.length}</Text>
+            </View>
+          )}
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.iconBtn} onPress={() => setShowFriends(true)}>
+          <Ionicons name="people-outline" size={22} color="#4a5568" />
+        </TouchableOpacity>
+      </View>
+
+      <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       {/* Avatar + header */}
       <View style={styles.header}>
         <View style={[styles.avatar, { backgroundColor: badgeColor + '33', borderColor: badgeColor }]}>
@@ -142,6 +223,27 @@ export default function ProfileScreen() {
         <Text style={styles.callsLeft}>{callsRemaining} calls remaining tonight</Text>
       </View>
 
+      {/* My Top Venues */}
+      {topVenues.length > 0 && (
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>My Top Venues</Text>
+          {(showAllVenues ? topVenues : topVenues.slice(0, 5)).map((v) => (
+            <View key={v.venueId} style={styles.venueRow}>
+              <Text style={styles.venueName}>{v.name}</Text>
+              <Text style={styles.venueCount}>{v.count}×</Text>
+            </View>
+          ))}
+          {topVenues.length > 5 && !showAllVenues && (
+            <TouchableOpacity style={styles.showMoreBtn} onPress={() => setShowAllVenues(true)} activeOpacity={0.7}>
+              <View style={styles.showMoreInner}>
+                <Ionicons name="chevron-down" size={14} color="#4a5568" />
+                <Text style={styles.showMoreText}>Show more</Text>
+              </View>
+            </TouchableOpacity>
+          )}
+        </View>
+      )}
+
       {/* Last night's results */}
       {lastNight && (
         <View style={styles.section}>
@@ -162,7 +264,7 @@ export default function ProfileScreen() {
       {top10.length > 0 && (
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Top Callers</Text>
-          {top10.map((entry, i) => (
+          {(showAllCallers ? top10 : top10.slice(0, 5)).map((entry, i) => (
             <View key={entry.id} style={styles.leaderRow}>
               <Text style={styles.leaderRank}>#{i + 1}</Text>
               <Text style={[styles.leaderName, entry.id === profile.id && styles.leaderNameSelf]}>
@@ -171,6 +273,14 @@ export default function ProfileScreen() {
               <Text style={styles.leaderScore}>{Math.round(entry.heat_score)}</Text>
             </View>
           ))}
+          {top10.length > 5 && !showAllCallers && (
+            <TouchableOpacity style={styles.showMoreBtn} onPress={() => setShowAllCallers(true)} activeOpacity={0.7}>
+              <View style={styles.showMoreInner}>
+                <Ionicons name="chevron-down" size={14} color="#4a5568" />
+                <Text style={styles.showMoreText}>Show more</Text>
+              </View>
+            </TouchableOpacity>
+          )}
         </View>
       )}
 
@@ -188,13 +298,39 @@ export default function ProfileScreen() {
       <TouchableOpacity style={styles.signOut} onPress={signOut}>
         <Text style={styles.signOutText}>Sign out</Text>
       </TouchableOpacity>
+
+      <TouchableOpacity style={styles.deleteAccount} onPress={handleDeleteAccount}>
+        <Text style={styles.deleteAccountText}>Delete Account</Text>
+      </TouchableOpacity>
     </ScrollView>
+
+      <FriendRequestsPanel
+        visible={showRequests}
+        requests={pendingIncoming}
+        onAccept={acceptRequest}
+        onDecline={declineRequest}
+        onClose={() => setShowRequests(false)}
+      />
+
+      <FriendsListPanel
+        visible={showFriends}
+        friends={friends}
+        onRemove={removeFriend}
+        onClose={() => setShowFriends(false)}
+      />
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#060b18' },
+  root: { flex: 1, backgroundColor: '#060b18' },
+  container: { flex: 1 },
   content: { padding: 24, paddingTop: 60, paddingBottom: 40 },
+
+  iconRow: { position: 'absolute', top: 56, right: 20, flexDirection: 'row', gap: 4, zIndex: 10 },
+  iconBtn: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
+  notifDot: { position: 'absolute', top: 6, right: 6, width: 16, height: 16, borderRadius: 8, backgroundColor: '#00d4ff', alignItems: 'center', justifyContent: 'center' },
+  notifDotText: { color: '#060b18', fontSize: 9, fontWeight: '900' },
 
   header: { flexDirection: 'row', alignItems: 'center', gap: 16, marginBottom: 32 },
   avatar: { width: 60, height: 60, borderRadius: 30, borderWidth: 2, alignItems: 'center', justifyContent: 'center' },
@@ -224,6 +360,14 @@ const styles = StyleSheet.create({
   nightScore: { color: '#e2e8f0', fontSize: 18, fontWeight: '700' },
   nightVenues: { color: '#4a5568', fontSize: 13, marginTop: 2 },
 
+  venueRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: '#0d1628' },
+  venueName: { color: '#94a3b8', fontSize: 14, flex: 1 },
+  venueCount: { color: '#4a5568', fontSize: 13, fontWeight: '700' },
+
+  showMoreBtn: { marginTop: 4, borderRadius: 14, borderWidth: 1, borderColor: '#1e2a3a', backgroundColor: '#080e1a', overflow: 'hidden' },
+  showMoreInner: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 13, gap: 7 },
+  showMoreText: { color: '#4a5568', fontSize: 13, fontWeight: '600' },
+
   leaderRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: '#0d1628' },
   leaderRank: { color: '#1e3a5f', fontSize: 13, fontWeight: '700', width: 28 },
   leaderName: { flex: 1, color: '#94a3b8', fontSize: 14 },
@@ -235,6 +379,8 @@ const styles = StyleSheet.create({
 
   signOut: { marginTop: 40, paddingVertical: 14, alignItems: 'center' },
   signOutText: { color: '#1e3a5f', fontSize: 14 },
+  deleteAccount: { marginTop: 8, paddingVertical: 14, alignItems: 'center' },
+  deleteAccountText: { color: '#7f1d1d', fontSize: 14 },
 
   guestContainer: { flex: 1, backgroundColor: '#060b18', justifyContent: 'center', alignItems: 'center', padding: 32 },
   guestTitle: { color: '#e2e8f0', fontSize: 22, fontWeight: '800', textAlign: 'center', marginBottom: 10 },
