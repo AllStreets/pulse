@@ -65,7 +65,7 @@ Legend: ✅ Done · 🔲 Still needed · ⚠️ Partially done / needs manual st
 - ⚠️ **GitHub Pages not yet enabled** — repo is private; requires GitHub Enterprise or making repo public
   - Holding off until launch
   - When ready: GitHub repo Settings → Pages → Source: `/docs` on `main`
-  - Policy URL will be: `https://allstreets.github.io/pulse-fresh/privacy-policy.html`
+  - Policy URL will be: `https://allstreets.github.io/pulse/privacy-policy.html`
 - 🔲 Add privacy policy URL to App Store Connect before submitting
 
 ---

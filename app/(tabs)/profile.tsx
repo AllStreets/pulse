@@ -31,6 +31,7 @@ export default function ProfileScreen() {
   const [topVenues, setTopVenues] = useState<{ venueId: string; name: string; count: number }[]>([]);
   const [showAllVenues, setShowAllVenues] = useState(false);
   const [showAllCallers, setShowAllCallers] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
   const { friends, pendingIncoming, acceptRequest, declineRequest, removeFriend } = useFriendships(profile?.id ?? null);
   const { top10, userPercentile, lastNight } = useLeaderboard(
     profile?.id ?? null,
@@ -282,27 +283,36 @@ export default function ProfileScreen() {
         </View>
       )}
 
-      {/* Notification toggle */}
-      <View style={styles.row}>
-        <Text style={styles.rowLabel}>Hot venue alerts</Text>
-        <Switch
-          value={notifEnabled}
-          onValueChange={handleToggleNotifications}
-          trackColor={{ true: '#3B82F6' }}
-          thumbColor="#fff"
-        />
-      </View>
-
-      <TouchableOpacity style={styles.signOut} onPress={signOut}>
-        <Text style={styles.signOutText}>Sign out</Text>
+      {/* Settings */}
+      <TouchableOpacity style={styles.showMoreBtn} onPress={() => setShowSettings(s => !s)} activeOpacity={0.7}>
+        <View style={styles.showMoreInner}>
+          <Ionicons name={showSettings ? 'chevron-up' : 'settings-outline'} size={14} color="#4a5568" />
+          <Text style={styles.showMoreText}>Settings</Text>
+        </View>
       </TouchableOpacity>
 
-      <TouchableOpacity
-        style={styles.privacyLink}
-        onPress={() => Linking.openURL('https://allstreets.github.io/pulse-fresh/privacy-policy.html')}
-      >
-        <Text style={styles.privacyLinkText}>Privacy Policy</Text>
-      </TouchableOpacity>
+      {showSettings && (
+        <View style={styles.settingsPanel}>
+          <View style={styles.settingsRow}>
+            <Text style={styles.settingsRowLabel}>Hot venue alerts</Text>
+            <Switch
+              value={notifEnabled}
+              onValueChange={handleToggleNotifications}
+              trackColor={{ true: '#3B82F6' }}
+              thumbColor="#fff"
+            />
+          </View>
+          <TouchableOpacity
+            style={styles.settingsRowBtn}
+            onPress={() => Linking.openURL('https://allstreets.github.io/pulse/privacy-policy.html')}
+          >
+            <Text style={styles.settingsRowBtnText}>Privacy Policy</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.settingsRowBtn} onPress={signOut}>
+            <Text style={styles.settingsRowBtnText}>Sign out</Text>
+          </TouchableOpacity>
+        </View>
+      )}
 
       <TouchableOpacity style={styles.deleteAccount} onPress={handleDeleteAccount}>
         <Text style={styles.deleteAccountText}>Delete Account</Text>
@@ -379,13 +389,11 @@ const styles = StyleSheet.create({
   leaderNameSelf: { color: '#00d4ff' },
   leaderScore: { color: '#4a5568', fontSize: 13 },
 
-  row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 14, borderTopWidth: 1, borderTopColor: '#0d1628' },
-  rowLabel: { color: '#94a3b8', fontSize: 15 },
-
-  signOut: { marginTop: 40, paddingVertical: 14, alignItems: 'center' },
-  signOutText: { color: '#1e3a5f', fontSize: 14 },
-  privacyLink: { marginTop: 24, paddingVertical: 10, alignItems: 'center' },
-  privacyLinkText: { color: '#1e3a5f', fontSize: 13 },
+  settingsPanel: { marginTop: 4, borderRadius: 14, borderWidth: 1, borderColor: '#1e2a3a', backgroundColor: '#080e1a', overflow: 'hidden' },
+  settingsRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 14, paddingHorizontal: 16, borderBottomWidth: 1, borderBottomColor: '#1e2a3a' },
+  settingsRowLabel: { color: '#94a3b8', fontSize: 14, fontWeight: '600' },
+  settingsRowBtn: { paddingVertical: 14, paddingHorizontal: 16, borderBottomWidth: 1, borderBottomColor: '#1e2a3a' },
+  settingsRowBtnText: { color: '#4a5568', fontSize: 14, fontWeight: '600' },
   deleteAccount: { marginTop: 8, paddingVertical: 14, alignItems: 'center' },
   deleteAccountText: { color: '#7f1d1d', fontSize: 14 },
 
