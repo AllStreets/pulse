@@ -1,4 +1,4 @@
-import { useRef, useCallback, useEffect } from 'react';
+import { useRef, useCallback, useEffect, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Linking } from 'react-native';
 import BottomSheet, { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import { Ionicons } from '@expo/vector-icons';
@@ -13,6 +13,10 @@ import { useUserStore } from '@/stores/userStore';
 import { isOpenNow, openUntilString, todayHoursString } from '@/lib/hours';
 import { heatColor } from '@/lib/heatColor';
 import type { Venue } from '@/types';
+import ViewShot from 'react-native-view-shot';
+import * as Sharing from 'expo-sharing';
+import { ShareCard } from '../share/ShareCard';
+import { supabase } from '@/lib/supabase';
 
 interface Props {
   venue: Venue | null;
@@ -24,11 +28,29 @@ export function VenueSheet({ venue, onClose }: Props) {
   const { tonightTimeline, predictionCount, vibeTags } = useVenue(venue?.id ?? null);
   const profile = useUserStore((s) => s.profile);
   const { callsRemaining, canCall, makeCall, hasCalledTarget } = usePredictions(profile?.id ?? null);
+  const [neighborhoodName, setNeighborhoodName] = useState('');
+  const [neighborhoodColor, setNeighborhoodColor] = useState('#3B82F6');
+  const shareCardRef = useRef<ViewShot>(null);
 
   useEffect(() => {
     if (venue) sheetRef.current?.expand();
     else sheetRef.current?.close();
   }, [venue]);
+
+  useEffect(() => {
+    if (!venue) return;
+    supabase
+      .from('neighborhoods')
+      .select('name, map_color')
+      .eq('id', venue.neighborhood_id)
+      .single()
+      .then(({ data }) => {
+        if (data) {
+          setNeighborhoodName(data.name);
+          setNeighborhoodColor(data.map_color ?? '#3B82F6');
+        }
+      });
+  }, [venue?.neighborhood_id]);
 
   const handleSheetChange = useCallback((index: number) => {
     if (index === -1) onClose();
@@ -51,6 +73,14 @@ export function VenueSheet({ venue, onClose }: Props) {
     );
     await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     await makeCall('venue', venue!.id, venue!.current_heat_score);
+  }
+
+  async function handleShare() {
+    try {
+      const uri = await shareCardRef.current?.capture();
+      if (!uri) return;
+      await Sharing.shareAsync(uri, { mimeType: 'image/png', dialogTitle: `${venue?.name} on Pulse` });
+    } catch {}
   }
 
   return (
@@ -177,6 +207,26 @@ export function VenueSheet({ venue, onClose }: Props) {
               neighborhoodId={venue.neighborhood_id}
             />
 
+            {/* Hidden share card for ViewShot capture */}
+            <ViewShot
+              ref={shareCardRef}
+              options={{ format: 'png', quality: 1.0 }}
+              style={{ position: 'absolute', top: -9999, left: 0, opacity: 0 }}
+            >
+              <ShareCard
+                venueName={venue.name}
+                neighborhoodName={neighborhoodName}
+                heatScore={venue.current_heat_score ?? 0}
+                neighborhoodColor={neighborhoodColor}
+              />
+            </ViewShot>
+
+            {/* Share button */}
+            <TouchableOpacity style={styles.shareBtn} onPress={handleShare}>
+              <Ionicons name="share-outline" size={16} color="#4a5568" />
+              <Text style={styles.shareBtnText}>Share</Text>
+            </TouchableOpacity>
+
             {/* Heat chart + ping count */}
             <HeatChart points={tonightTimeline} label="Activity tonight" />
             <View style={styles.pingCountCard}>
@@ -251,4 +301,16 @@ const styles = StyleSheet.create({
   },
   pingCountValue: { color: '#00d4ff', fontSize: 24, fontWeight: '800' },
   pingCountLabel: { color: '#4a5568', fontSize: 11, marginTop: 2 },
+
+  shareBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    paddingVertical: 12,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: '#1e3a5f',
+  },
+  shareBtnText: { color: '#4a5568', fontSize: 14, fontWeight: '600' },
 });
