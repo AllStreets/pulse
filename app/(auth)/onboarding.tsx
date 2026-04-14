@@ -13,8 +13,8 @@ const STEPS = [
   {
     icon: 'flame' as const,
     iconColor: '#FF6B00',
-    title: 'Know what\u2019s hot tonight.',
-    body: 'Pulse shows you real-time nightlife heat across Chicago \u2014 which venues are popping, which scenes are alive, and where the night is heading.',
+    title: 'Know what's hot tonight.',
+    body: 'Pulse shows you real-time nightlife heat across Chicago — which venues are popping, which scenes are alive, and where the night is heading.',
     cta: 'Next',
   },
   {
@@ -28,8 +28,15 @@ const STEPS = [
     icon: 'location' as const,
     iconColor: '#4CAF50',
     title: 'Power the heatmap.',
-    body: 'Your location is anonymized and contributes to the live heatmap. Tap \u201cI\u2019m Here\u201d at a venue to send a signal. The more people, the more accurate.',
-    cta: 'Enable & Go',
+    body: 'Tap "I'm Here" at a venue to send an anonymous signal. Your exact location is never stored — only the venue you tap.',
+    cta: 'Allow Location',
+  },
+  {
+    icon: 'navigate' as const,
+    iconColor: '#4CAF50',
+    title: 'Keep the map live.',
+    body: 'Pulse works best with background location enabled. This lets you passively contribute to the heatmap when you're out. You can change this anytime in Settings.',
+    cta: 'Enable Background Location',
   },
 ];
 
@@ -39,23 +46,40 @@ export default function OnboardingScreen() {
   const { session } = useAuth();
 
   async function handleCta() {
-    if (step < STEPS.length - 1) {
-      setStep(s => s + 1);
+    // Step 2: request foreground location
+    if (step === 2) {
+      try {
+        await Location.requestForegroundPermissionsAsync();
+      } catch {}
+      setStep(3);
       return;
     }
 
-    try {
-      const { status } = await Location.requestForegroundPermissionsAsync();
-      if (status === 'granted') {
-        await Location.requestBackgroundPermissionsAsync();
-      }
-    } catch {}
+    // Step 3: request background location + push, then finish
+    if (step === 3) {
+      try {
+        const { status } = await Location.getForegroundPermissionsAsync();
+        if (status === 'granted') {
+          await Location.requestBackgroundPermissionsAsync();
+        }
+      } catch {}
 
-    if (session?.user?.id) {
-      await registerForPushNotifications(session.user.id);
+      if (session?.user?.id) {
+        await registerForPushNotifications(session.user.id);
+      }
+
+      await AsyncStorage.setItem(ONBOARDING_KEY, 'true');
+      router.replace('/(tabs)');
+      return;
     }
 
-    await AsyncStorage.setItem(ONBOARDING_KEY, 'true');
+    if (step < STEPS.length - 1) {
+      setStep(s => s + 1);
+    }
+  }
+
+  function handleSkip() {
+    AsyncStorage.setItem(ONBOARDING_KEY, 'true');
     router.replace('/(tabs)');
   }
 
@@ -87,10 +111,7 @@ export default function OnboardingScreen() {
       </TouchableOpacity>
 
       {step < STEPS.length - 1 && (
-        <TouchableOpacity onPress={async () => {
-          await AsyncStorage.setItem(ONBOARDING_KEY, 'true');
-          router.replace('/(tabs)');
-        }}>
+        <TouchableOpacity onPress={handleSkip}>
           <Text style={styles.skip}>Skip</Text>
         </TouchableOpacity>
       )}
