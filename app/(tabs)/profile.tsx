@@ -119,8 +119,6 @@ export default function ProfileScreen() {
     if (error) setNotifEnabled(!value); // revert on failure
   }
 
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-
   async function handleDeleteAccount() {
     if (!profile?.id) return;
     Alert.alert(

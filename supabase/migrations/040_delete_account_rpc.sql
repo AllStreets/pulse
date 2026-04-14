@@ -27,10 +27,16 @@ BEGIN
   -- 4. Delete friendships (both directions)
   DELETE FROM friendships WHERE requester_id = v_user_id OR addressee_id = v_user_id;
 
-  -- 5. Delete profile
+  -- 5a. Delete follows (both directions)
+  DELETE FROM follows WHERE follower_id = v_user_id OR following_id = v_user_id;
+
+  -- 5b. Delete local knowledge entries
+  DELETE FROM local_knowledge WHERE author_id = v_user_id;
+
+  -- 6. Delete profile
   DELETE FROM profiles WHERE id = v_user_id;
 
-  -- 6. Delete auth user (requires service-role security context via security definer)
+  -- 7. Delete auth user (requires service-role security context via security definer)
   DELETE FROM auth.users WHERE id = v_user_id;
 END;
 $$;
