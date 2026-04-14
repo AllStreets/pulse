@@ -12,10 +12,17 @@
       "ios": { "simulator": false }
     },
     "production": {
-      "distribution": "store"
+      "distribution": "store",
+      "ios": { "autoIncrement": true }
     }
   },
   "submit": {
-    "production": {}
+    "production": {
+      "ios": {
+        "appleId": "PLACEHOLDER_APPLE_ID",
+        "ascAppId": "PLACEHOLDER_ASC_APP_ID",
+        "appleTeamId": "PLACEHOLDER_TEAM_ID"
+      }
+    }
   }
 }
