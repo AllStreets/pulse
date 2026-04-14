@@ -1,5 +1,5 @@
 import { useRef, useCallback, useEffect, useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Linking } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Linking, Alert } from 'react-native';
 import BottomSheet, { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
@@ -80,7 +80,9 @@ export function VenueSheet({ venue, onClose }: Props) {
       const uri = await shareCardRef.current?.capture();
       if (!uri) return;
       await Sharing.shareAsync(uri, { mimeType: 'image/png', dialogTitle: `${venue?.name} on Pulse` });
-    } catch {}
+    } catch {
+      Alert.alert('Could not share', 'Try again in a moment.');
+    }
   }
 
   return (
@@ -207,20 +209,6 @@ export function VenueSheet({ venue, onClose }: Props) {
               neighborhoodId={venue.neighborhood_id}
             />
 
-            {/* Hidden share card for ViewShot capture */}
-            <ViewShot
-              ref={shareCardRef}
-              options={{ format: 'png', quality: 1.0 }}
-              style={{ position: 'absolute', top: -9999, left: 0, opacity: 0 }}
-            >
-              <ShareCard
-                venueName={venue.name}
-                neighborhoodName={neighborhoodName}
-                heatScore={venue.current_heat_score ?? 0}
-                neighborhoodColor={neighborhoodColor}
-              />
-            </ViewShot>
-
             {/* Share button */}
             <TouchableOpacity style={styles.shareBtn} onPress={handleShare}>
               <Ionicons name="share-outline" size={16} color="#4a5568" />
@@ -239,6 +227,22 @@ export function VenueSheet({ venue, onClose }: Props) {
           </>
         )}
       </BottomSheetScrollView>
+
+      {/* ViewShot lives here — outside scroll, still inside BottomSheet */}
+      {venue && (
+        <ViewShot
+          ref={shareCardRef}
+          options={{ format: 'png', quality: 1.0 }}
+          style={{ position: 'absolute', top: -9999, left: 0, opacity: 0 }}
+        >
+          <ShareCard
+            venueName={venue.name}
+            neighborhoodName={neighborhoodName}
+            heatScore={venue.current_heat_score ?? 0}
+            neighborhoodColor={neighborhoodColor}
+          />
+        </ViewShot>
+      )}
     </BottomSheet>
   );
 }
