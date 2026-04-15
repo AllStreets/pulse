@@ -311,12 +311,11 @@ export default function ProfileScreen() {
           <TouchableOpacity style={styles.settingsRowBtn} onPress={signOut}>
             <Text style={styles.settingsRowBtnText}>Sign out</Text>
           </TouchableOpacity>
+          <TouchableOpacity style={[styles.settingsRowBtn, styles.deleteAccount]} onPress={handleDeleteAccount}>
+            <Text style={styles.deleteAccountText}>Delete Account</Text>
+          </TouchableOpacity>
         </View>
       )}
-
-      <TouchableOpacity style={styles.deleteAccount} onPress={handleDeleteAccount}>
-        <Text style={styles.deleteAccountText}>Delete Account</Text>
-      </TouchableOpacity>
     </ScrollView>
 
       <FriendRequestsPanel
@@ -394,8 +393,8 @@ const styles = StyleSheet.create({
   settingsRowLabel: { color: '#94a3b8', fontSize: 14, fontWeight: '600' },
   settingsRowBtn: { paddingVertical: 14, paddingHorizontal: 16, borderBottomWidth: 1, borderBottomColor: '#1e2a3a' },
   settingsRowBtnText: { color: '#4a5568', fontSize: 14, fontWeight: '600' },
-  deleteAccount: { marginTop: 8, paddingVertical: 14, alignItems: 'center' },
-  deleteAccountText: { color: '#7f1d1d', fontSize: 14 },
+  deleteAccount: { borderBottomWidth: 0 },
+  deleteAccountText: { color: '#7f1d1d', fontSize: 14, fontWeight: '600' },
 
   guestContainer: { flex: 1, backgroundColor: '#060b18', justifyContent: 'center', alignItems: 'center', padding: 32 },
   guestTitle: { color: '#e2e8f0', fontSize: 22, fontWeight: '800', textAlign: 'center', marginBottom: 10 },

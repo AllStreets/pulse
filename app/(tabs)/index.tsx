@@ -1,5 +1,6 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
-import { StyleSheet, View, TouchableOpacity, Text } from 'react-native';
+import { StyleSheet, View, TouchableOpacity, Text, ActivityIndicator } from 'react-native';
+import { useFocusEffect } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import MapboxGL from '@rnmapbox/maps';
 import { HeatmapLayer } from '@/components/map/HeatmapLayer';
@@ -20,6 +21,7 @@ import type { StadiumTeamEntry } from '@/data/stadiums';
 import { useHeatmap } from '@/hooks/useHeatmap';
 import { useNeighborhoods } from '@/hooks/useNeighborhoods';
 import { useHotVenuesStore } from '@/stores/hotVenuesStore';
+import { useMapNavStore } from '@/stores/mapNavStore';
 import { useFriendships } from '@/hooks/useFriendships';
 import { useFriendsHeatmap } from '@/hooks/useFriendsHeatmap';
 import { useUserStore } from '@/stores/userStore';
@@ -38,10 +40,13 @@ export default function MapScreen() {
   const { friendUserIds } = useFriendships(profile?.id ?? null);
   const { heatPoints: friendsHeatPoints, activeVenueIds: friendsActiveVenueIds } = useFriendsHeatmap(friendUserIds);
 
-  // Trigger initial fetch if store hasn't loaded yet
+  // Initial fetch + refresh every 5 minutes
   useEffect(() => {
-    if (hotVenues.length === 0) fetchHotVenues();
+    fetchHotVenues();
+    const interval = setInterval(fetchHotVenues, 5 * 60 * 1000);
+    return () => clearInterval(interval);
   }, []);
+
   const insets = useSafeAreaInsets();
 
   const [selectedVenue, setSelectedVenue] = useState<Venue | null>(null);
@@ -56,11 +61,31 @@ export default function MapScreen() {
   const [selectedStadiumEntry, setSelectedStadiumEntry] = useState<StadiumTeamEntry | null>(null);
   const [mapMoving, setMapMoving] = useState(false);
   const [panelHeight, setPanelHeight] = useState(0);
+  const [userCoords, setUserCoords] = useState<[number, number] | null>(null);
 
   const cameraRef = useRef<MapboxGL.Camera>(null);
   const mapViewRef = useRef<MapboxGL.MapView>(null);
   const coordDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const movingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Cross-tab venue navigation from Tonight.
+  // Read Zustand state directly on focus — setPendingVenue is always called before router.navigate,
+  // so the value is always set by the time the Map tab gains focus.
+  useFocusEffect(
+    useCallback(() => {
+      const venue = useMapNavStore.getState().pendingVenue;
+      if (!venue) return;
+      useMapNavStore.getState().setPendingVenue(null);
+      setTimeout(() => {
+        cameraRef.current?.setCamera({
+          centerCoordinate: [venue.coordinates.lng, venue.coordinates.lat],
+          zoomLevel: 15,
+          animationDuration: 600,
+        });
+        setTimeout(() => setSelectedVenue(venue), 620);
+      }, 80);
+    }, [])
+  );
 
   function adjustZoom(delta: number) {
     const next = Math.min(20, Math.max(5, zoom + delta));
@@ -76,20 +101,18 @@ export default function MapScreen() {
     }
     if (!mapViewRef.current || venues.length === 0) return;
 
-    // Mark map as moving immediately — hides the overlay
     setMapMoving(true);
 
-    // Clear any pending settle timeout
     if (movingTimeoutRef.current) clearTimeout(movingTimeoutRef.current);
     if (coordDebounceRef.current) clearTimeout(coordDebounceRef.current);
 
-    // After 200ms of no camera events, recompute coords and show overlay
     movingTimeoutRef.current = setTimeout(async () => {
       try {
         const bounds = await mapViewRef.current!.getVisibleBounds();
         const [maxLng, maxLat] = bounds[0];
         const [minLng, minLat] = bounds[1];
 
+        // Filter to visible viewport first — reduces getPointInView calls
         const visible = venues.filter(
           v => v.coordinates.lng >= minLng && v.coordinates.lng <= maxLng &&
                v.coordinates.lat >= minLat && v.coordinates.lat <= maxLat
@@ -103,8 +126,6 @@ export default function MapScreen() {
         );
         setVenueScreenCoords(coordPairs);
 
-        // Compute stadium screen coords — spread offset always applied so
-        // teams sharing a stadium (Bulls/Blackhawks) are always both visible
         const stadiumEntries = allStadiumTeams();
         const stadiumCoords: StadiumScreenCoord[] = await Promise.all(
           stadiumEntries.map(async entry => {
@@ -124,7 +145,7 @@ export default function MapScreen() {
       } catch {
         setMapMoving(false);
       }
-    }, 200);
+    }, 120);
   }, [venues]);
 
   // Recompute when venues load
@@ -203,6 +224,33 @@ export default function MapScreen() {
             <HeatmapLayer points={friendsMode ? friendsHeatPoints : heatPoints} zoom={zoom} />
             <CTARoutesLayer visible={showCTA} />
             <CTALayer visible={showCTA} />
+            <MapboxGL.UserLocation
+              visible
+              renderMode="custom"
+              onUpdate={(loc) =>
+                setUserCoords([loc.coords.longitude, loc.coords.latitude])
+              }
+            />
+            <MapboxGL.ShapeSource
+              id="user-location-source"
+              shape={{
+                type: 'FeatureCollection',
+                features: userCoords ? [{
+                  type: 'Feature',
+                  geometry: { type: 'Point', coordinates: userCoords },
+                  properties: {},
+                }] : [],
+              }}
+            >
+              <MapboxGL.CircleLayer
+                id="user-location-halo"
+                style={{ circleRadius: 14, circleColor: '#41B6E6', circleOpacity: 0.18 }}
+              />
+              <MapboxGL.CircleLayer
+                id="user-location-dot"
+                style={{ circleRadius: 7, circleColor: '#41B6E6', circleStrokeWidth: 2, circleStrokeColor: '#fff' }}
+              />
+            </MapboxGL.ShapeSource>
             <VenueLayer venues={venues} onPress={setSelectedVenue} />
           </>
         )}
@@ -224,6 +272,13 @@ export default function MapScreen() {
         />
       )}
 
+      {/* Loading overlay — shown until Mapbox finishes loading */}
+      {!mapLoaded && (
+        <View style={styles.loadingOverlay}>
+          <ActivityIndicator size="large" color="#00d4ff" />
+        </View>
+      )}
+
       {/* Live Intel Panel — floats over map below safe area */}
       <View
         style={[styles.panelOverlay, { top: insets.top }]}
@@ -240,10 +295,10 @@ export default function MapScreen() {
       {/* Layer toggles — positioned below the panel */}
       <View style={[styles.layerToggles, { top: insets.top + panelHeight + 8 }]}>
         <TouchableOpacity
-          style={[styles.toggleBtn, friendsMode && styles.toggleBtnActive]}
+          style={[styles.toggleBtn, styles.toggleBtnActive]}
           onPress={() => setFriendsMode(v => !v)}
         >
-          <Text style={[styles.toggleText, friendsMode && styles.toggleTextActive]}>
+          <Text style={styles.toggleTextActive}>
             {friendsMode ? 'Friends' : 'City'}
           </Text>
         </TouchableOpacity>
@@ -293,6 +348,14 @@ export default function MapScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
+
+  loadingOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: '#060b18',
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 100,
+  },
 
   panelOverlay: {
     position: 'absolute',
